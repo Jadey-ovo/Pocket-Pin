@@ -1,0 +1,4 @@
+import { mount } from '@vue/test-utils'
+import { expect,it,vi } from 'vitest'
+import PhotoCrop from './PhotoCrop.vue'
+it('clamps the dragged crop edge to the photo and keeps a positive area',async()=>{const w=mount(PhotoCrop,{props:{src:'photo.png',active:true,modelValue:{x:.1,y:.1,width:.8,height:.8}}});const frame=w.find('.pin-crop-frame').element;vi.spyOn(frame,'getBoundingClientRect').mockReturnValue({width:200,height:200} as DOMRect);const edge=w.find('.e');Object.defineProperty(edge.element,'setPointerCapture',{value:vi.fn()});await edge.trigger('pointerdown',{clientX:180,clientY:100,pointerId:1});await edge.trigger('pointermove',{clientX:300,clientY:100,pointerId:1});const crop=w.emitted('update:modelValue')![0][0] as {x:number;width:number};expect(crop.x).toBe(.1);expect(crop.width).toBe(.9);await edge.trigger('pointerup');w.unmount()})

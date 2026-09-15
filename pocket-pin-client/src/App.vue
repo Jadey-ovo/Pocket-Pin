@@ -15,6 +15,6 @@ const themeVars = {
 
 <template>
   <van-config-provider :theme-vars="themeVars">
-    <router-view />
+    <router-view v-slot="{ Component, route }"><Transition name="pin-route" mode="out-in"><component :is="Component" :key="route.path"/></Transition></router-view>
   </van-config-provider>
 </template>

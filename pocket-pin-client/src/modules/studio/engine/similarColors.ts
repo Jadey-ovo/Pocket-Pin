@@ -1,0 +1,3 @@
+import { palette, colorByCode } from '@/core/project'
+export function hsl(hex:string){const v=[1,3,5].map(i=>parseInt(hex.slice(i,i+2),16)/255),[r,g,b]=v,max=Math.max(...v),min=Math.min(...v),d=max-min,l=(max+min)/2;let h=0;if(d)h=(max===r?(g-b)/d+(g<b?6:0):max===g?(b-r)/d+2:(r-g)/d+4)/6;return [h,d?d/(1-Math.abs(2*l-1)):0,l]}
+export function similarColors(code:string,limit=8){const source=colorByCode(code);if(!source)return[];const [h,s,l]=hsl(source.hex);return palette.filter(c=>c.code!==code).map(c=>{const [ch,cs,cl]=hsl(c.hex),dh=Math.min(Math.abs(h-ch),1-Math.abs(h-ch));return {c,d:dh*dh*4*Math.min(s,cs)+(s-cs)**2*.35+(l-cl)**2}}).sort((a,b)=>a.d-b.d||a.c.code.localeCompare(b.c.code,undefined,{numeric:true})).slice(0,limit).map(v=>v.c)}

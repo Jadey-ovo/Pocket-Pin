@@ -1,0 +1,4 @@
+import { showToast as toast, showConfirmDialog as confirm, type ToastOptions, type DialogOptions } from 'vant'
+import { t } from './i18n'
+export function showToast(value:string|ToastOptions){const options=typeof value==='string'?{message:value}:value;const message=String(options.message||'');const icon=options.icon||(/失败|错误|无效/.test(message)?'warning-o':/成功|已|保存|完成/.test(message)?'passed':/透明度/.test(message)?'eye-o':'info-o');return toast({position:'top',duration:1400,...options,message:t(message),icon,className:'pin-toast'})}
+export function showConfirmDialog(options:DialogOptions){return confirm({...options,className:'pin-confirm',theme:'round-button',title:t(options.title),message:typeof options.message==='string'?t(options.message):options.message,confirmButtonText:t(options.confirmButtonText||'确认'),cancelButtonText:t(options.cancelButtonText||'取消')})}

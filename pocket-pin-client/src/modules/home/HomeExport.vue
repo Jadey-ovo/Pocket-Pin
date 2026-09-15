@@ -1,0 +1,21 @@
+<script setup lang="ts">
+import { ref,watch,onMounted,nextTick } from 'vue'
+import { Field as VanField,Slider as VanSlider,Switch as VanSwitch,Button as VanButton } from 'vant'
+import type { BeadProject } from '@/core/project'
+import { previewExport,exportProject } from '@/modules/studio/engine/export'
+import { drawWatermark } from '@/modules/studio/engine/print'
+import { showToast } from '@/shared/feedback'
+import { t } from '@/shared/i18n'
+const previewError=ref('')
+const enlarged=ref(false),enlargedCanvas=ref<HTMLCanvasElement|null>(null)
+const props=defineProps<{project:BeadProject}>()
+const title=ref(props.project.name),author=ref(''),watermark=ref(false),mark=ref('Pocket Pin'),opacity=ref(.18),format=ref<'png'|'jpg'>('png'),canvas=ref<HTMLCanvasElement|null>(null),saving=ref(false)
+let base:HTMLCanvasElement|null=null,fullWidth=1,fullHeight=1
+function rebuild(){try{previewError.value='';const full=previewExport(props.project,{showColorCodes:true,showGuideLines:true,projectName:title.value,authorName:author.value,exportBounds:'pattern'});fullWidth=full.width;fullHeight=full.height;const scale=Math.min(1,1400/Math.max(fullWidth,fullHeight));base=document.createElement('canvas');base.width=Math.round(fullWidth*scale);base.height=Math.round(fullHeight*scale);base.getContext('2d')!.drawImage(full,0,0,base.width,base.height);full.width=full.height=1;paint()}catch{previewError.value=t('预览生成失败，请重试')}}
+function paint(){const el=canvas.value;if(!el||!base)return;el.width=base.width;el.height=base.height;const ctx=el.getContext('2d')!;ctx.drawImage(base,0,0);if(watermark.value&&mark.value.trim()){ctx.save();ctx.scale(base.width/fullWidth,base.height/fullHeight);drawWatermark(ctx,fullWidth,fullHeight,{text:mark.value,opacity:opacity.value});ctx.restore()}if(enlargedCanvas.value){enlargedCanvas.value.width=el.width;enlargedCanvas.value.height=el.height;enlargedCanvas.value.getContext('2d')!.drawImage(el,0,0)}}
+onMounted(rebuild);watch([title,author],rebuild);watch([watermark,mark,opacity],paint,{flush:'sync'})
+async function enlarge(){enlarged.value=true;await nextTick();paint()}
+function opacityFeedback(){showToast({message:`${t('透明度')} ${Math.round(opacity.value*100)}%`,icon:'eye-o',duration:650})}
+async function save(){saving.value=true;try{await exportProject({...props.project,name:title.value.trim()||props.project.name},format.value,author.value,{projectName:title.value,fileName:title.value.trim()||props.project.name,watermark:{enabled:watermark.value,text:mark.value,opacity:opacity.value}});showToast('已生成导出文件')}catch{showToast('导出失败，请重试')}finally{saving.value=false}}
+</script>
+<template><div class="pin-home-export-layout"><div class="pin-export-top"><button class="pin-export-fixed-preview" :aria-label="t('放大导出图预览')" @click="previewError?rebuild():enlarge()"><span v-if="previewError" role="alert">{{previewError}}</span><canvas v-show="!previewError" ref="canvas" role="img" :aria-label="t('完整导出图预览')"/></button><div class="pin-export-settings"><van-field v-model="title" :label="t('作品名称')" maxlength="60"/><van-field v-model="author" :label="t('作者')" :placeholder="t('选填')" maxlength="40"/><div class="pin-export-format-row"><span>{{t('导出格式')}}</span><div class="pin-format-tabs"><i :class="{jpg:format==='jpg'}"/><button v-for="f in ['png','jpg'] as const" :key="f" :aria-pressed="format===f" @click="format=f">{{ f.toUpperCase() }}</button></div></div><div class="pin-export-watermark"><span>{{t('水印')}}</span><van-switch v-model="watermark" size="20px"/></div><van-field v-if="watermark" v-model="mark" :disabled="!watermark" :placeholder="t('水印文本')" maxlength="48"/><label v-if="watermark" class="pin-export-opacity"><span>{{ t('透明度') }}</span><van-slider @update:model-value="opacityFeedback" :button-size="16" v-model="opacity" :disabled="!watermark" :min="0" :max="1" :step=".01"/></label></div></div><van-button class="pin-home-export-save" type="primary" :loading="saving" @click="save">{{t('导出')}}</van-button></div><Teleport to="body"><Transition name="pin-preview-fade"><div v-if="enlarged" class="pin-home-export-lightbox" role="dialog" :aria-label="t('导出图预览')" @click.self="enlarged=false"><button :aria-label="t('关闭导出预览')" @click="enlarged=false">×</button><canvas ref="enlargedCanvas"/></div></Transition></Teleport></template>

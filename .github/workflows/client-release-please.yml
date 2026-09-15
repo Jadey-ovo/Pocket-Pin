@@ -1,0 +1,62 @@
+name: Automate client version and release
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Calculate version and manage release pull request
+        id: release
+        uses: googleapis/release-please-action@v4
+        with:
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      - name: Checkout released source
+        if: ${{ steps.release.outputs['pocket-pin-client--release_created'] }}
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        if: ${{ steps.release.outputs['pocket-pin-client--release_created'] }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: pocket-pin-client/package-lock.json
+
+      - name: Install dependencies
+        if: ${{ steps.release.outputs['pocket-pin-client--release_created'] }}
+        working-directory: pocket-pin-client
+        run: npm ci
+
+      - name: Run unit tests
+        if: ${{ steps.release.outputs['pocket-pin-client--release_created'] }}
+        working-directory: pocket-pin-client
+        run: npm test
+
+      - name: Build production bundle
+        if: ${{ steps.release.outputs['pocket-pin-client--release_created'] }}
+        working-directory: pocket-pin-client
+        run: npm run build
+
+      - name: Package release artifact
+        if: ${{ steps.release.outputs['pocket-pin-client--release_created'] }}
+        env:
+          RELEASE_TAG: ${{ steps.release.outputs['pocket-pin-client--tag_name'] }}
+        run: tar -czf "pocket-pin-client-${RELEASE_TAG}.tar.gz" -C pocket-pin-client/dist .
+
+      - name: Attach artifact to GitHub Release
+        if: ${{ steps.release.outputs['pocket-pin-client--release_created'] }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ steps.release.outputs['pocket-pin-client--tag_name'] }}
+        run: gh release upload "$RELEASE_TAG" "pocket-pin-client-${RELEASE_TAG}.tar.gz" --clobber
