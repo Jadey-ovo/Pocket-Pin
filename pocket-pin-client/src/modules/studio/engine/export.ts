@@ -1,5 +1,5 @@
 import type { BeadProject } from '@/core/project'
-import { createProject } from '../../../../../reference/perler-beads-generator/src/project'
+import { createProject } from './printModel'
 import { downloadPrintPdf, downloadPrintPng, downloadPrintImage, renderPrintCanvas, type PrintExportOptions, downloadUsageWorkbook } from './print'
 export function downloadJson(project: BeadProject, legacy = false) {
   const blob = new Blob([JSON.stringify(legacy ? { ...project, layers: project.legacyLayers } : project, null, 2)], { type:'application/json' }), url=URL.createObjectURL(blob), a=document.createElement('a')

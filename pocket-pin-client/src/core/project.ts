@@ -1,11 +1,11 @@
-import { basicPalette } from '../../../reference/perler-beads-generator/src/palette'
+import { palette } from './palette'
 export type Tool = 'pencil' | 'eraser' | 'fill' | 'remove' | 'recolor' | 'eyedropper' | 'move' | 'copy' | 'paste' | 'shape' | 'text' | 'pan' | 'select'
 export type BeadColor = { code: string; name: string; hex: string }
 export type ProjectLayer = { id: string; name: string; type: 'bead' | 'reference'; visible: boolean; locked: boolean; opacity: number; cells: Array<string | null>; imageUrl?: string }
 export type EditorSettings = { reference?:{url:string;opacity:number;scale:number;x:number;y:number}; grid: 'auto' | 'off' | 'always'; coordinates: boolean; boards: boolean; codes: boolean; round: boolean; color: string; recent: string[]; beadsPerPack: number }
 export const defaultSettings = (): EditorSettings => ({ grid: 'auto', coordinates: true, boards: true, codes: false, round: false, color: 'H7', recent: ['H7', 'H2'], beadsPerPack: 500 })
 export type BeadProject = { id: string; name: string; width: number; height: number; cells: Array<string | null>; layers: ProjectLayer[]; activeLayerId: string; complete: boolean; createdAt: string; updatedAt: string; settings?: EditorSettings; legacyLayers?: ProjectLayer[] }
-export const palette: BeadColor[] = basicPalette.map(item => ({ code: item.primaryCode, name: item.name, hex: item.hex }))
+export { palette }
 const colors = new Map(palette.map(c => [c.code, c]))
 export const colorByCode = (code: string | null) => colors.get(code || '')
 export const makeProject = (name = '未命名图纸', width = 52, height = 52): BeadProject => {

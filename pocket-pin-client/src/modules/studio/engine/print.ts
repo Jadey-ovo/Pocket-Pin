@@ -1,5 +1,4 @@
-import { getColor, mappedCode } from '../../../../../reference/perler-beads-generator/src/palette';
-import type { BeadLayer, BeadProject, UsageRow } from '../../../../../reference/perler-beads-generator/src/types';
+import { getColor, mappedCode, type BeadLayer, type BeadProject, type UsageRow } from './printModel';
 
 export type PrintExportOptions = {
   format?: 'png' | 'jpg' | 'pdf';

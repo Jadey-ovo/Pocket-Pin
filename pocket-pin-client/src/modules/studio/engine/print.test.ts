@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { createProject } from '../../../../../reference/perler-beads-generator/src/project'
+import { createProject } from './printModel'
 import { cropProjectToPattern } from './print'
 describe('print bounds',()=>{
   it('exports the occupied dimensions without adding empty bead rows',()=>{const p=createProject(52,65);p.cells.fill('mard-h7');const printed=cropProjectToPattern(p);expect(printed.width).toBe(52);expect(printed.height).toBe(65);expect(printed.cells).toHaveLength(3380)})
