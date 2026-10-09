@@ -476,16 +476,3 @@ Pad 与桌面端使用一致的颜色、字体、图标、间距规则、卡片�
 | 原图与参考图 | 保留参考 Perler 的会话内使用方式，不随项目完整持久化 |
 | 删除恢复 | 不提供回收站，二次确认后永久删除本地项目 |
 | 分享与社区 | 不提供分享、链接预览、水印和社区发布 |
-
-## 19. 参考实现索引
-
-| 内容 | 参考位置 |
-| --- | --- |
-| 页面状态、功能集合和主工作区 | `reference/perler-beads-generator/src/App.tsx` |
-| 2D 画布和编辑工具 | `reference/perler-beads-generator/src/WorkspaceCanvas.tsx` |
-| 图片转换 | `reference/perler-beads-generator/src/imageToBeads.ts` |
-| 色卡和颜色匹配 | `reference/perler-beads-generator/src/palette.ts` |
-| 项目、图层和本地保存 | `reference/perler-beads-generator/src/project.ts` |
-| 图纸、用量和 JSON 导出 | `reference/perler-beads-generator/src/exporters.ts` |
-| 用量和孤立拼豆 | `reference/perler-beads-generator/src/usage.ts` |
-| 数据类型 | `reference/perler-beads-generator/src/types.ts` |
