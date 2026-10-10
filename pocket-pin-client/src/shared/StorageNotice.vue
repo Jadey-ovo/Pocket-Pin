@@ -15,15 +15,15 @@ function acknowledge() {
 
 <template>
   <van-dialog v-model:show="visible" class-name="pin-confirm pin-storage-notice" theme="round-button" :title="t('图纸保存说明')" :confirm-button-text="t('我知道了')" :close-on-click-overlay="false" @confirm="acknowledge">
-    <div class="pin-storage-notice-content">
-      <p>{{ t('图纸仅保存在当前设备的当前浏览器中，不会自动同步到其他设备或浏览器。') }}</p>
-      <p>{{ t('分享网站链接不会分享你的图纸，其他人只能看到自己保存的作品。') }}</p>
-      <p>{{ t('清除网站数据或使用无痕模式可能导致记录丢失。重要作品请及时导出 JSON 备份，以便重新导入并继续编辑。') }}</p>
-    </div>
+    <ol class="pin-storage-notice-content">
+      <li>{{ t('图纸仅保存在当前设备的当前浏览器中，不会自动同步到其他设备或浏览器。') }}</li>
+      <li>{{ t('分享网站链接不会分享你的图纸，其他人只能看到自己保存的作品。') }}</li>
+      <li>{{ t('清除网站数据或使用无痕模式可能导致记录丢失。重要作品建议及时导出图纸。') }}</li>
+    </ol>
   </van-dialog>
 </template>
 
 <style scoped>
-.pin-storage-notice-content{padding:4px 24px 18px;color:var(--animal-ink,#574437);font-size:14px;line-height:1.75;text-align:left}
-.pin-storage-notice-content p{margin:12px 0}
+.pin-storage-notice-content{margin:0;padding:4px 24px 18px 42px;list-style:decimal;color:var(--animal-ink,#574437);font-size:14px;line-height:1.75;text-align:left}
+.pin-storage-notice-content li{margin:12px 0}
 </style>
