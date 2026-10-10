@@ -81,7 +81,7 @@
 .pin-studio .pin-project-name .van-button__text{width:100%;text-align:left}.pin-studio .pin-usage-trigger{background:#e9e8e5!important;padding:0 12px;border-radius:16px}
 .pin-studio .pin-workspace .pin-panel.pin-usage-dropdown{top:calc(68px + env(safe-area-inset-top));left:0;right:0;transform:none;width:100%;border-radius:0;border:0;border-top:1px solid var(--animal-border);box-shadow:none}.pin-usage-overlay{background:rgba(40,36,30,.42)}
 .pin-usage-summary{padding:18px 0;gap:24px;flex-wrap:wrap}.pin-usage-summary label{gap:8px}.pin-usage-summary b{white-space:nowrap}.pin-usage-dropdown .pin-panel-content{padding:0 18px 12px;gap:0}
-.pin-studio .pin-tools,.pin-studio .pin-edit-menu{min-width:0;max-width:100%;overflow-x:auto!important;overflow-y:hidden!important;justify-content:flex-start!important;touch-action:pan-x;overscroll-behavior-x:contain;scrollbar-width:none}.pin-studio .pin-tools>.van-button,.pin-studio .pin-edit-menu>.van-button{flex:0 0 64px!important;min-width:64px!important;width:64px!important}
+.pin-studio .pin-tools,.pin-studio .pin-edit-menu{min-width:0;max-width:100%;overflow-x:auto!important;overflow-y:hidden!important;justify-content:safe center!important;touch-action:pan-x;overscroll-behavior-x:contain;scrollbar-width:none}.pin-studio .pin-tools>.van-button,.pin-studio .pin-edit-menu>.van-button{flex:0 0 64px!important;min-width:64px!important;width:64px!important}
 .pin-studio .pin-palette-dock{min-width:0;width:100%}.pin-studio .pin-palette-strip{flex:1 1 0;min-width:0;overflow-x:auto!important;touch-action:pan-x;overscroll-behavior-x:contain}.pin-palette-strip .van-button{flex:0 0 44px!important}
 .pin-mode-dock{position:absolute;bottom:0;left:0;right:0;z-index:25;height:var(--pin-dock-height);display:flex;flex-direction:column;justify-content:flex-end;background:var(--animal-paper);border-top:1px solid var(--animal-border)}
 .pin-mode-controls{min-height:0;flex:1;display:flex;flex-direction:column;justify-content:center;gap:8px;padding:8px 12px;overflow-y:auto;overflow-x:hidden}.pin-mode-controls p{margin:0;text-align:center;font-size:12px;line-height:1.6;color:var(--animal-muted)}.pin-mode-controls .pin-palette-dock{padding:0;height:64px;flex-shrink:0}.pin-mode-options{display:flex;gap:8px;overflow-x:auto;flex-shrink:0;min-width:0;scrollbar-width:none;touch-action:pan-x}.pin-mode-options .van-button{flex-shrink:0;height:40px;font-size:12px;border:0;background:var(--animal-bg)}.pin-mode-options .chosen{background:var(--animal-mint)!important}.pin-similar{min-height:56px;flex:0 0 56px!important;gap:12px}
@@ -151,7 +151,7 @@ html[lang=en] .pin-tool{min-width:84px}html[lang=en] .pin-mode-controls p{font-s
 .pin-studio .pin-operation-footer{position:relative;min-height:56px}.pin-studio .pin-operation-footer>b{position:absolute;left:50%;transform:translateX(-50%);width:calc(100% - 200px);text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
 .pin-studio .pin-tools .van-button.chosen,.pin-studio .pin-mode-options .van-button.chosen,.pin-studio .pin-function-tabs .van-button.chosen{background:var(--animal-mint)!important;color:var(--animal-primary-dark)!important;border-radius:18px}
 .pin-studio .pin-tools .was-edited:not(.chosen){color:#78b5a5!important;background:transparent!important}
-.pin-studio .pin-mode-options{justify-content:center;align-items:center}.pin-studio .pin-page-operation{align-items:center}.pin-studio .pin-page-operation>.pin-range,.pin-studio .pin-page-operation>.pin-dimensions{width:100%;max-width:560px}.pin-studio .pin-function-tabs{justify-content:center;width:100%}
+.pin-studio .pin-mode-options{justify-content:safe center;align-items:center}.pin-studio .pin-page-operation{align-items:center}.pin-studio .pin-page-operation>.pin-range,.pin-studio .pin-page-operation>.pin-dimensions{width:100%;max-width:560px}.pin-studio .pin-function-tabs{justify-content:center;width:100%}
 /* The 72px menu items need their own vertical breathing room. */
 .pin-studio .pin-draw-dock .pin-tools{height:96px;min-height:96px;flex:0 0 96px;padding:12px 16px!important;align-items:center}
 .pin-studio .pin-recolor-scope{border-top:0;padding-top:0}.pin-studio .pin-recolor-controls{gap:8px}
@@ -161,7 +161,7 @@ html[lang=en] .pin-tool{min-width:84px}html[lang=en] .pin-mode-controls p{font-s
 .pin-studio .pin-import-menu{justify-content:center!important;gap:24px;padding:12px 16px}
 .pin-studio .pin-mode-controls>.pin-recrop{align-self:center;flex:none;height:36px;min-height:36px;margin:0 16px 24px;padding:0 20px;border:0;border-radius:20px;background:var(--animal-bg)}
 .pin-size-editor,.pin-reference-editor{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;width:100%;height:100%;padding:12px 8px 20px;min-height:0}
-.pin-size-editor .pin-dimensions{width:100%;max-width:420px}.pin-size-editor .pin-mode-options{max-width:100%;justify-content:flex-start}.pin-size-editor .van-button{font-size:11px}
+.pin-size-editor .pin-dimensions{width:100%;max-width:420px}.pin-size-editor .pin-mode-options{max-width:100%;justify-content:safe center}.pin-size-editor .van-button{font-size:11px}
 .pin-reference-editor .pin-range{width:100%;max-width:420px;margin:0;flex:none}.pin-reference-photo{position:relative;overflow:hidden;min-width:64px;height:64px!important}.pin-reference-photo img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}.pin-reference-photo span{position:relative;z-index:1;background:#fffdf6bb;border-radius:8px;padding:3px}.pin-reference-editor p{padding:4px 0 8px}
 .pin-reference-editor{gap:8px;padding:8px 8px 16px}.pin-reference-editor .pin-reference-photo{height:48px!important;min-height:48px}.pin-reference-editor .pin-range{padding:0 12px 8px;gap:10px;font-size:12px}.pin-reference-editor p{font-size:11px;line-height:16px;padding:0;margin:0}.pin-reference-editor .pin-mode-options{flex:none}
 .pin-studio .pin-empty-import{width:72px!important;height:72px!important;min-height:72px!important;min-width:72px!important;padding:8px!important;border:1px dashed var(--animal-border)!important;background:var(--animal-bg)!important;border-radius:16px!important;overflow:hidden;position:relative}
@@ -170,3 +170,39 @@ html[lang=en] .pin-tool{min-width:84px}html[lang=en] .pin-mode-controls p{font-s
 
 .pin-studio-export{height:min(440px,60dvh);padding:16px 0 4px;box-sizing:border-box}.pin-studio-export .pin-export-settings .van-field{padding:5px 8px}.pin-studio-export .pin-export-fixed-preview{height:auto}
 .pin-image-type-picker{width:100%;height:100%;max-width:560px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:2px 8px}.pin-image-type-picker>p{margin:0;color:var(--animal-text);font-weight:700}.pin-image-type-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;width:100%}.pin-image-type-options>.van-button{height:88px;min-height:88px;border:1px solid var(--animal-border);border-radius:18px;background:var(--animal-bg);color:var(--animal-text);box-shadow:0 3px 0 color-mix(in srgb,var(--animal-border) 70%,transparent);transition:transform .2s ease,box-shadow .2s ease,background .2s ease}.pin-image-type-options>.van-button:active{transform:translateY(2px);box-shadow:0 1px 0 var(--animal-border)}.pin-image-type-options .van-button__text{display:grid;grid-template-columns:56px 1fr;grid-template-rows:1fr 1fr;column-gap:9px;width:100%;align-items:center;text-align:left}.pin-image-type-options strong{align-self:end;font-size:14px}.pin-image-type-options small{align-self:start;color:var(--animal-text-soft);font-size:10px}.pin-type-sample{grid-row:1/3;display:block;width:56px;height:44px;border:2px solid var(--animal-text);border-radius:12px;overflow:hidden;background:var(--animal-paper)}.pin-type-cartoon{display:grid;grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(2,1fr);gap:2px;padding:5px}.pin-type-cartoon b{border-radius:4px;background:var(--animal-primary)}.pin-type-cartoon b:nth-child(2),.pin-type-cartoon b:nth-child(3){background:var(--animal-warning)}.pin-type-photo{background:linear-gradient(145deg,var(--animal-text) 0 28%,var(--animal-primary) 29% 54%,var(--animal-mint) 55% 75%,var(--animal-paper) 76%)}.pin-size-presets{display:flex;justify-content:center;gap:7px}.pin-size-presets .van-button{height:30px;min-width:50px;border:0;border-radius:15px;background:var(--animal-bg);font-size:11px}
+
+/* Allow parameter content to scroll instead of clipping on short screens. */
+.pin-studio .pin-page-operation{overflow-y:auto;justify-content:safe center;align-items:center}
+.pin-import-control{height:auto;min-height:min-content;flex-shrink:0;padding:8px 0}
+.pin-studio .pin-page-operation .pin-segments{flex-wrap:wrap;flex-shrink:0;justify-content:center}
+
+/* Secondary options sit directly on the workspace; toolbar and confirmation
+   remain separate, stable controls. */
+.pin-studio .pin-mode-dock,.pin-studio .pin-mode-controls,.pin-studio .pin-page-operation{background:transparent;box-shadow:none}
+.pin-studio .pin-parameter-menu{background:var(--animal-paper);justify-content:safe center!important}
+.pin-import-advice{font-size:12px;color:var(--animal-muted);line-height:1.6;margin:0 8px 8px;text-align:center}
+
+.pin-studio:has(.pin-mode-dock):after{background:transparent}
+
+.pin-studio .pin-size-presets .van-button{background:var(--animal-paper)}
+.pin-studio .pin-size-presets .van-button.chosen{background:var(--animal-mint);color:var(--animal-primary-dark)}
+
+/* Shared option treatment across import and editing sessions. */
+.pin-studio .pin-mode-controls{justify-content:safe center}
+.pin-studio .pin-mode-controls .pin-mode-options .van-button,
+.pin-studio .pin-recolor-scope .van-button,
+.pin-studio .pin-mode-controls>.pin-recrop{background:var(--animal-paper)}
+.pin-studio .pin-mode-controls .pin-mode-options .van-button.chosen,
+.pin-studio .pin-recolor-scope .van-button.chosen{background:var(--animal-mint)!important;color:var(--animal-primary-dark)}
+.pin-studio .pin-recolor-controls{width:100%}
+.pin-studio .pin-recolor-scope{justify-content:safe center;overflow-x:auto;flex-shrink:0}
+.pin-studio .pin-recolor-scope .van-button{flex-shrink:0}
+
+.pin-usage-head{position:sticky;top:0;background:var(--animal-paper);z-index:1;color:var(--animal-muted);font-weight:700}
+.pin-usage-head>b{grid-column:1 / 3}
+.pin-usage-sort{display:inline-flex;align-items:center;justify-content:flex-end;gap:4px;padding:6px 0;border:0;background:transparent;color:inherit;font:inherit;cursor:pointer}
+.pin-usage-sort:focus-visible{outline:2px solid var(--animal-primary);outline-offset:2px;border-radius:4px}
+
+/* Sort indicators are text-sized icons, not bead color swatches. */
+.pin-studio .pin-usage-sort{border:0;box-shadow:none;background:transparent}
+.pin-studio .pin-usage-sort .van-icon{display:inline-block;width:12px;height:12px;min-width:12px;font-size:12px;line-height:12px;border:0;border-radius:0;background:transparent}

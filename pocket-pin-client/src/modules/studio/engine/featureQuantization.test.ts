@@ -24,3 +24,12 @@ describe('feature-preserving generation',()=>{
   expect(generateCells(input)).toEqual([null,null,null,null]);
  });
 });
+
+it('prioritizes colors in detected face cells without changing transparency or the palette',()=>{
+ const choices=[{code:'gray',rgb:[180,180,180]},{code:'white',rgb:[255,255,255]},{code:'skin',rgb:[175,145,135]}]
+ const values=Array.from({length:100},(_,i)=>i<12?[175,145,135]:i<32?[255,255,255]:[180,180,180])
+ const importance=new Uint8Array(100).fill(1);importance.fill(6,0,12)
+ const cells=featureQuantize(values,10,choices,2,false,false,importance)
+ expect(cells.slice(0,12)).toEqual(Array(12).fill('skin'))
+ expect(new Set(cells).size).toBeLessThanOrEqual(2)
+})

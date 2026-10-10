@@ -118,7 +118,7 @@ export function renderPrintCanvas(project: BeadProject, options: PrintExportOpti
     const left=gridLeft+x*cellSize,top=gridTop+y*cellSize,color=getColor(printProject.cells[y*printProject.width+x]);context.fillStyle=color?.hex??'#fffdf7';context.fillRect(left,top,cellSize,cellSize);
     if(options.showColorCodes&&color){context.fillStyle=luminance(color.rgb)<130?'#ffffff':'#503d30';context.font=`700 ${Math.max(8,Math.floor(cellSize*.38))}px Nunito, sans-serif`;context.textAlign='center';context.fillText(color.primaryCode,left+cellSize/2,top+cellSize/2+.4)}
   }
-  context.strokeStyle='#cf454f';context.lineWidth=1.25;context.beginPath();for(let x=0;x<=printProject.width;x++){context.moveTo(gridLeft+x*cellSize,gridTop);context.lineTo(gridLeft+x*cellSize,gridTop+gridHeight)}for(let y=0;y<=printProject.height;y++){context.moveTo(gridLeft,gridTop+y*cellSize);context.lineTo(gridLeft+gridWidth,gridTop+y*cellSize)}context.stroke();
+  context.strokeStyle='#ffffff';context.lineWidth=.7;context.beginPath();for(let x=0;x<=printProject.width;x++){context.moveTo(gridLeft+x*cellSize,gridTop);context.lineTo(gridLeft+x*cellSize,gridTop+gridHeight)}for(let y=0;y<=printProject.height;y++){context.moveTo(gridLeft,gridTop+y*cellSize);context.lineTo(gridLeft+gridWidth,gridTop+y*cellSize)}context.stroke();
   if(options.showGuideLines)drawPrintGuideLines(context,printProject,gridLeft,gridTop,cellSize);drawOuterGridFrame(context,gridLeft,gridTop,gridWidth,gridHeight);
   drawUsageLegend(context,usage,bodyLeft+boardWidth+28,bodyTop,legendWidth,chipHeight,chipGap);
   if(options.watermark?.enabled&&options.watermark.text.trim())drawWatermark(context,width,height,options.watermark);
@@ -190,7 +190,8 @@ function drawPrintGuideLines(
   context.save();
   context.strokeStyle = '#b92c3c';
   context.lineWidth = 2.4;
-  guideLineEdges(project.width, project.boardSettings.boardWidth).forEach((x, index) => {
+  guideLineEdges(project.width).forEach((x) => {
+    context.lineWidth=x%10===0?2.4:1.1;
     context.setLineDash([]);
     const left = gridLeft + x * cellSize;
     context.beginPath();
@@ -198,7 +199,8 @@ function drawPrintGuideLines(
     context.lineTo(left, gridTop + project.height * cellSize);
     context.stroke();
   });
-  guideLineEdges(project.height, project.boardSettings.boardHeight).forEach((y, index) => {
+  guideLineEdges(project.height).forEach((y) => {
+    context.lineWidth=y%10===0?2.4:1.1;
     context.setLineDash([]);
     const top = gridTop + y * cellSize;
     context.beginPath();
@@ -209,17 +211,10 @@ function drawPrintGuideLines(
   context.restore();
 }
 
-function guideLineEdges(totalCells: number, boardCells: number): number[] {
-  const edges = new Set<number>();
-  const boardSize = Math.max(1, boardCells);
-  for (let boardStart = 0; boardStart < totalCells; boardStart += boardSize) {
-    const segmentLength = Math.min(boardSize, totalCells - boardStart);
-    for (let offset = 5; offset < segmentLength; offset += 5) {
-      edges.add(boardStart + offset);
-    }
-    if (boardStart + segmentLength < totalCells) edges.add(boardStart + segmentLength);
-  }
-  return [...edges].filter((value) => value > 0 && value < totalCells).sort((a, b) => a - b);
+function guideLineEdges(totalCells: number): number[] {
+  const edges:number[]=[];
+  for(let position=5;position<totalCells;position+=5)edges.push(position);
+  return edges;
 }
 
 function drawOuterGridFrame(context: CanvasRenderingContext2D, left: number, top: number, width: number, height: number): void {

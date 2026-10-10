@@ -1,8 +1,9 @@
 <script setup lang="ts">
+import VanSlider from './LiveSlider.vue'
 import { showToast } from '@/shared/feedback'
 import { t } from '@/shared/i18n'
 import { ref, computed, watch, onUnmounted } from 'vue'
-import { Button as VanButton, Icon as VanIcon, Field as VanField, Slider as VanSlider, Switch as VanSwitch} from 'vant'
+import { Button as VanButton, Icon as VanIcon, Field as VanField, Switch as VanSwitch} from 'vant'
 import type { BeadProject } from '@/core/project'
 import { previewExport, exportProject, downloadJson } from './engine/export'
 const props=defineProps<{project:BeadProject}>()
