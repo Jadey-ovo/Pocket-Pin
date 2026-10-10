@@ -17,6 +17,32 @@ Object.assign(words,{'显示网格':'Show grid','方豆':'Square beads','已水�
 Object.assign(words,{'已切换为自动网格':'Switched to adaptive grid','已切换为隐藏网格':'Switched to hidden grid','已切换为显示网格':'Switched to visible grid','已切换为圆豆':'Switched to round beads','已切换为方豆':'Switched to square beads'})
 Object.assign(words,{'已清空图纸':'Pattern cleared'})
 Object.assign(words,{'放置图纸':'Place pattern','图纸已加入豆板':'Pattern added to board','图纸没有豆子，请调整后生成':'No beads generated. Adjust and retry.','图案超出豆板，请降低精细度':'Pattern exceeds board. Reduce detail.','此处已有豆子，请换个位置':'Beads overlap. Choose another position.','拖动图案选择位置，确认后加入豆板':'Drag to position, then confirm to add'})
-export function t(value:unknown):string{const text=String(value??'');if(locale.value==='zh')return text;if(words[text])return words[text];if(words[text.trim()])return text.replace(text.trim(),words[text.trim()]);return text.replace(/颗拼豆/g,'beads').replace(/删除「(.+)」？/g,'Delete “$1”?').replace(/复制「(.+)」？/g,'Duplicate “$1”?').replace(/已选取 (.+)/g,'Picked $1').replace(/已选 (\d+) 颗/g,'$1 selected').replace(/(\d+) 颗/g,'$1 beads').replace(/(\d+) 色/g,'$1 colors').replace(/(\d+) 格/g,'$1 cells')}
+export function t(value:unknown):string{const text=String(value??'');if(locale.value==='zh')return text;if(words[text])return words[text];if(words[text.trim()])return text.replace(text.trim(),words[text.trim()]);return text.replace(/^(全部|已拼|待拼) \((\d+)\)$/,(_,label,count)=>`${words[label]} (${count})`).replace(/颗拼豆/g,'beads').replace(/删除「(.+)」？/g,'Delete “$1”?').replace(/复制「(.+)」？/g,'Duplicate “$1”?').replace(/已选取 (.+)/g,'Picked $1').replace(/已选 (\d+) 颗/g,'$1 selected').replace(/(\d+) 颗/g,(_,n)=>`${n} ${n==='1'?'bead':'beads'}`).replace(/(\d+) 色/g,(_,n)=>`${n} ${n==='1'?'color':'colors'}`).replace(/(\d+) 格/g,(_,n)=>`${n} ${n==='1'?'cell':'cells'}`)}
 Object.assign(words,{'特征优先':'Preserve features','自然还原':'Natural colors','还原效果':'Rendering','用色上限':'Color limit','优先保留轮廓与明暗层次':'Preserve contours and tonal separation','优先保留整体颜色与过渡':'Preserve overall colors and transitions','图案大小':'Pattern size'})
 Object.assign(words,{'选择图片类型':'Choose image type','这张图片属于哪一类？':'What kind of image is this?','卡通／插画':'Cartoon / illustration','照片／写实':'Photo / realistic','小尺寸 · 清晰色块':'Smaller · clear shapes','更多格数 · 保留层次':'More cells · richer depth','默认小尺寸，可继续调整':'Starts small; you can adjust it','默认 52 格，保持原图比例':'Starts at 52 cells and keeps the source ratio','保留轮廓、表情和清晰色块':'Preserve outlines, expressions, and clear color areas','保留明暗、质感和空间层次':'Preserve light, texture, and depth','图片类型':'Image type','最大':'Max'})
+
+// Compact labels for mobile cards, toolbars and editing sheets.
+Object.assign(words,{
+'复制图纸':'Copy','复制作品':'Copy','确认复制':'Copy','作品名称':'Name','未命名作品':'Untitled pattern',
+'用量':'Materials','待拼':'To do','已拼':'Done','矩形填充':'Fill','豆板尺寸':'Size',
+'水平镜像':'Flip H','垂直镜像':'Flip V','圆豆':'Round','方豆':'Square','参考图':'Reference','自动网格':'Auto grid','隐藏网格':'Grid off','显示网格':'Grid on',
+'选择图片':'Choose','图案大小':'Size','图纸大小':'Size','图片类型':'Image type','照片处理':'Photo setup','图纸预览':'Preview',
+'照片／写实':'Photo','卡通／插画':'Cartoon / art','顺时针':'Rotate right','逆时针':'Rotate left',
+'原色':'From','目标色':'To','单颗':'One bead','全图同色':'Same color','推荐':'Suggested',
+'色号':'Code','颗数消耗':'Beads','包消耗':'Bags','用量明细':'Materials list','每包颗数':'Beads per bag',
+'背景颜色':'Background','显示作品名称':'Show name','显示用量':'Show materials','显示标题信息':'Show title',
+'标题信息':'Title','图纸信息':'Pattern info','名称':'Name','筛选图纸':'Filter patterns','卡片视图':'Card view','图纸视图':'Pattern view',
+'暖白':'Cream','纯白':'White','浅粉':'Pink','浅绿':'Mint','浅蓝':'Blue','透明':'Transparent',
+'豆板宽度':'Board width','豆板高度':'Board height','左上角等比缩放':'Resize from top left','右上角等比缩放':'Resize from top right',
+'左下角等比缩放':'Resize from bottom left','右下角等比缩放':'Resize from bottom right','待生成区域':'Pattern area',
+'拖动图片调整画布位置':'Drag image to position','框内生成图纸 · 拖动图片，拖动四角等比缩放':'Drag to position · Drag corners to resize',
+'拖动图纸调整豆板裁切位置':'Drag pattern to position','拖动图纸调整位置，框外豆子不会保留':'Drag to position · Beads outside are cropped',
+'拖动擦除豆子':'Drag to erase','单指画豆子，双指缩放与移动':'Draw with one finger · Pinch to zoom',
+'拖出矩形，松手填充':'Drag an area to fill','先点选豆板上要替换的颜色，再选择新的颜色':'Tap a source color, then choose its replacement',
+'点击豆板吸取目标颜色':'Tap a bead to pick its color','按住查看原图':'Hold to compare','拖动图片，双指缩放；确认后保存':'Drag to position · Pinch to zoom',
+'正在更新预览…':'Updating preview…','正在生成图纸，请稍候…':'Generating…','正在生成预览…':'Generating preview…','正在读取照片…':'Loading photo…',
+'照片仅用于当前会话，不计入拼豆材料或导出图纸。':'Reference only; excluded from materials and exports.',
+'保留主要颜色，将其他颜色合并到相近色。可以保护眼睛、描边等关键色。':'Merge similar colors. Protect key details first.',
+'PNG 保留透明背景；JPG 和 PDF 使用白色背景':'PNG keeps transparency. JPG and PDF use white.',
+'缩小':'Zoom out','放大':'Zoom in','重置缩放':'Reset zoom','· 影响':'· affected','，画布中可预览换色效果。':'. Preview on the board.'
+})

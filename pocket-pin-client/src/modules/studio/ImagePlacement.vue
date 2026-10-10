@@ -125,5 +125,5 @@ function keyScale(e: KeyboardEvent, sx: number, sy: number) {
 .pin-placement-handle.ne,.pin-placement-handle.sw{cursor:nesw-resize}
 .pin-placement-handle:focus-visible{outline:2px solid var(--animal-primary);border-radius:8px}
 .pin-placement-handle:disabled{pointer-events:none;opacity:.5}
-.pin-placement small{flex:none;font-size:12px;color:var(--animal-muted);text-align:center}
+.pin-placement small{flex:none;min-height:20px;margin-bottom:60px;padding:0 12px;font-size:12px;color:var(--animal-muted);text-align:center}
 </style>

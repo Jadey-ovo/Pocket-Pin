@@ -2,6 +2,9 @@ import { getColor, mappedCode, type BeadLayer, type BeadProject, type UsageRow }
 
 export type PrintExportOptions = {
   format?: 'png' | 'jpg' | 'pdf';
+  showTitle?: boolean;
+  showUsage?: boolean;
+  background?: string;
   watermark?: { text: string; opacity: number; enabled: boolean };
   exportBounds?: 'pattern' | 'canvas';
   showColorCodes: boolean;
@@ -72,7 +75,7 @@ export function downloadUsageWorkbook(project: BeadProject): void {
 
 export async function downloadPrintImage(project: BeadProject, options: PrintExportOptions, format: 'png'|'jpg'='png'): Promise<void> {
   for(const item of printLayerProjects(project,options)){
-    const layerOptions={...options,layerName:item.layerName},canvas=renderPrintCanvas(item.project,layerOptions),mime=format==='jpg'?'image/jpeg':'image/png';
+    const layerOptions={...options,format,layerName:item.layerName},canvas=renderPrintCanvas(item.project,layerOptions),mime=format==='jpg'?'image/jpeg':'image/png';
     const blob=await new Promise<Blob>((resolve,reject)=>canvas.toBlob(b=>b?resolve(b):reject(new Error('图片生成失败')),mime,.96));
     downloadBlob(`${printFileName(layerOptions)}.${format}`,blob,mime);
   }
@@ -81,7 +84,7 @@ export function downloadPrintPng(project:BeadProject,options:PrintExportOptions=
 
 export function downloadPrintPdf(project: BeadProject, options: PrintExportOptions = { showColorCodes: true, showGuideLines: true }): void {
   printLayerProjects(project, options).forEach((item) => {
-    const layerOptions = { ...options, layerName: item.layerName };
+    const layerOptions = { ...options, format:'pdf' as const, layerName: item.layerName };
     const canvas = renderPrintCanvas(item.project, layerOptions);
     const dataUrl = canvas.toDataURL('image/jpeg', 0.98);
     const jpegBytes = dataUrlToBytes(dataUrl);
@@ -91,36 +94,38 @@ export function downloadPrintPdf(project: BeadProject, options: PrintExportOptio
 }
 
 export function renderPrintCanvas(project: BeadProject, options: PrintExportOptions): HTMLCanvasElement {
-  const printProject=options.exportBounds==='canvas'?project:cropProjectToPattern(project),usage=summarizeProjectUsage(printProject);
-  const margin=30,labelBand=24,headerHeight=88;
-  // Grow small patterns to balance a long palette; keep large grids legible.
-  const legendRows=Math.max(1,Math.ceil(usage.length/3));
-  const chipHeight=40,chipGap=8,legendWidth=320;
-  const legendHeight=legendRows*(chipHeight+chipGap)-chipGap;
-  const cellSize=Math.max(24,Math.min(40,Math.ceil(legendHeight/printProject.height)));
+  const printProject=options.exportBounds==='pattern'?cropProjectToPattern(project):project,usage=summarizeProjectUsage(printProject);
+  const showTitle=options.showTitle!==false,showUsage=options.showUsage!==false;
+  const margin=30,labelBand=24,headerHeight=(showTitle?42:0)+(showUsage?26:0);
+  const chipHeight=40,chipGap=8;
+  const cellSize=Math.max(24,Math.ceil(240/printProject.width));
   const gridWidth=printProject.width*cellSize,gridHeight=printProject.height*cellSize;
-  const boardWidth=Math.max(240,gridWidth+labelBand*2),bodyHeight=Math.max(gridHeight+labelBand*2,legendHeight);
-  const contentWidth=boardWidth+28+legendWidth;
-  const naturalWidth=contentWidth+margin*2,naturalHeight=margin+headerHeight+bodyHeight+margin;
+  const columns=Math.max(1,Math.floor((gridWidth+chipGap)/(100+chipGap)));
+  const legendHeight=Math.ceil(usage.length/columns)*(chipHeight+chipGap)-chipGap;
+  const contentWidth=gridWidth+labelBand*2;
+  const naturalWidth=contentWidth+margin*2,naturalHeight=margin*2+headerHeight+gridHeight+labelBand*2+(showUsage&&usage.length?28+legendHeight:0);
   const ratio=naturalWidth/naturalHeight>1.16?4/3:1;
   const width=Math.max(naturalWidth,naturalHeight*ratio),height=width/ratio;
   const bodyLeft=(width-contentWidth)/2,bodyTop=margin+headerHeight+(height-naturalHeight)/2;
-  const gridLeft=bodyLeft+(boardWidth-gridWidth)/2,gridTop=bodyTop+labelBand;
+  const gridLeft=bodyLeft+labelBand,gridTop=bodyTop+labelBand;
   const scale=resolvePrintScale(width,height),canvas=document.createElement('canvas');canvas.width=Math.ceil(width*scale);canvas.height=Math.ceil(height*scale);
   const context=canvas.getContext('2d');if(!context)throw new Error('Canvas is not available.');context.scale(scale,scale);
-  context.fillStyle='#f5ecd8';context.fillRect(0,0,width,height);
-  context.fillStyle='#fffaf0';roundRect(context,12,12,width-24,height-24,22);context.fill();
-  context.fillStyle='#705944';context.textAlign='left';context.textBaseline='middle';context.font='700 25px Nunito, "Noto Sans SC", sans-serif';context.fillText(printDisplayName(options),margin,margin+15,contentWidth);
-  context.font='500 13px Nunito, "Noto Sans SC", sans-serif';context.fillStyle='#927960';context.fillText(`${printProject.width} × ${printProject.height} 格   ·   ${usage.length} 色   ·   ${usage.reduce((sum,row)=>sum+row.count,0)} 颗`,margin,margin+45);
-  context.fillText(options.authorName?.trim()?`Pocket Pin  ·  ${options.authorName.trim()}`:'Pocket Pin · 拼豆图纸',margin,margin+65,contentWidth);
+  const transparent=options.background==='transparent'&&options.format!=='jpg'&&options.format!=='pdf';
+  if(!transparent){context.fillStyle=options.background==='transparent'?'#ffffff':options.background||'#fffaf0';context.fillRect(0,0,width,height)}
+  if(showTitle){
+    context.fillStyle='#705944';context.textAlign='left';context.textBaseline='middle';context.font='700 25px Nunito, "Noto Sans SC", sans-serif';context.fillText(printDisplayName(options),gridLeft,bodyTop-headerHeight+15,gridWidth);
+
+  }
+  if(showUsage){context.textAlign='left';context.textBaseline='middle';context.font='500 13px Nunito, "Noto Sans SC", sans-serif';context.fillStyle='#927960';context.fillText(`${printProject.width} × ${printProject.height} 格   ·   ${usage.length} 色   ·   ${usage.reduce((sum,row)=>sum+row.count,0)} 颗`,gridLeft,bodyTop-headerHeight+(showTitle?48:12))}
+  context.textBaseline='middle';
   drawCoordinateBands(context,printProject,gridLeft,gridTop,labelBand,cellSize);
   for(let y=0;y<printProject.height;y++)for(let x=0;x<printProject.width;x++){
-    const left=gridLeft+x*cellSize,top=gridTop+y*cellSize,color=getColor(printProject.cells[y*printProject.width+x]);context.fillStyle=color?.hex??'#fffdf7';context.fillRect(left,top,cellSize,cellSize);
+    const left=gridLeft+x*cellSize,top=gridTop+y*cellSize,color=getColor(printProject.cells[y*printProject.width+x]);if(color||!transparent){context.fillStyle=color?.hex??'#fffdf7';context.fillRect(left,top,cellSize,cellSize);}
     if(options.showColorCodes&&color){context.fillStyle=luminance(color.rgb)<130?'#ffffff':'#503d30';context.font=`700 ${Math.max(8,Math.floor(cellSize*.38))}px Nunito, sans-serif`;context.textAlign='center';context.fillText(color.primaryCode,left+cellSize/2,top+cellSize/2+.4)}
   }
   context.strokeStyle='#ffffff';context.lineWidth=.7;context.beginPath();for(let x=0;x<=printProject.width;x++){context.moveTo(gridLeft+x*cellSize,gridTop);context.lineTo(gridLeft+x*cellSize,gridTop+gridHeight)}for(let y=0;y<=printProject.height;y++){context.moveTo(gridLeft,gridTop+y*cellSize);context.lineTo(gridLeft+gridWidth,gridTop+y*cellSize)}context.stroke();
   if(options.showGuideLines)drawPrintGuideLines(context,printProject,gridLeft,gridTop,cellSize);drawOuterGridFrame(context,gridLeft,gridTop,gridWidth,gridHeight);
-  drawUsageLegend(context,usage,bodyLeft+boardWidth+28,bodyTop,legendWidth,chipHeight,chipGap);
+  if(showUsage)drawUsageLegend(context,usage,gridLeft,gridTop+gridHeight+labelBand+28,gridWidth,chipHeight,chipGap);
   if(options.watermark?.enabled&&options.watermark.text.trim())drawWatermark(context,width,height,options.watermark);
   return canvas;
 }
@@ -227,12 +232,12 @@ function drawOuterGridFrame(context: CanvasRenderingContext2D, left: number, top
 
 function drawUsageLegend(context:CanvasRenderingContext2D,usage:Array<{color:NonNullable<ReturnType<typeof getColor>>;count:number}>,left:number,top:number,width:number,chipHeight:number,chipGap:number):void{
   context.save();
-  const columns=3,actual=(width-(columns-1)*chipGap)/columns;
+  const columns=Math.max(1,Math.floor((width+chipGap)/(100+chipGap))),actual=(width-(columns-1)*chipGap)/columns;
   context.textBaseline='middle';
   usage.forEach((row,index)=>{
     const x=left+index%columns*(actual+chipGap),y=top+Math.floor(index/columns)*(chipHeight+chipGap);
     context.fillStyle='#f5ecd8';roundRect(context,x,y,actual,chipHeight,10);context.fill();
-    context.fillStyle=row.color.hex;roundRect(context,x+4,y+4,36,32,8);context.fill();
+    context.fillStyle=row.color.hex;roundRect(context,x+6,y+4,32,32,16);context.fill();
     context.strokeStyle='#d7c0a5';context.lineWidth=.7;context.stroke();
     context.fillStyle=luminance(row.color.rgb)<130?'#ffffff':'#503d30';context.textAlign='center';
     context.font='700 11px Nunito, sans-serif';context.fillText(row.color.primaryCode,x+22,y+chipHeight/2);

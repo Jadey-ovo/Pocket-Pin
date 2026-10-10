@@ -22,13 +22,13 @@ function swipe(e:PointerEvent){if(startY-e.clientY>24&&Math.abs(e.clientX-startX
   <van-button v-if="canPick" class="pin-icon-button pin-pick-inline" :aria-label="t('从豆板取色')" @click="expanded=false;emit('pick')"><tool-glyph name="eyedropper"/></van-button>
   <van-button v-if="canErase" class="pin-icon-button pin-erase-inline" :class="{chosen:erasing}" :aria-label="t('橡皮')" :aria-pressed="erasing" @click="expanded=false;emit('erase')"><tool-glyph name="eraser"/></van-button>
   <van-button class="pin-family-trigger" :aria-label="t('选择色系或展开色板')"  :aria-expanded="expanded" @click="expanded?expanded=false:open()">{{ t(family) }}<van-icon :name="expanded?'arrow-down':'arrow-up'"/></van-button>
-  <div v-drag-scroll class="pin-palette-strip"><van-button v-for="c in colors" :key="c.code" :aria-label="`选择 ${c.code}`" :aria-pressed="color===c.code" :class="{chosen:color===c.code}" @click="emit('choose',c.code)"><i :style="{'--bead-color':c.hex}"></i><small>{{ t(c.code) }}</small></van-button></div>
+  <div v-drag-scroll class="pin-palette-strip"><van-button v-for="c in colors" :key="c.code" :aria-label="`选择 ${c.code}`" :aria-pressed="color===c.code" :class="{chosen:color===c.code}" @click="emit('choose',c.code)"><i :style="{'--bead-color':c.hex}">{{ t(c.code) }}</i></van-button></div>
 </div>
 <Transition name="pin-mode"><div v-if="expanded" class="pin-palette-backdrop" :style="{bottom:`${sheetBottom}px`}" @click.self="expanded=false">
   <section class="pin-palette-sheet" role="dialog" :aria-label="t('选择拼豆颜色')">
     <div class="pin-sheet-handle"></div>
     <div v-drag-scroll class="pin-family-list"><van-button v-for="f in families" :key="f" :class="{chosen:family===f}" @click="family=f">{{ t(f) }}</van-button></div>
-    <div class="pin-swatches"><van-button v-for="c in colors" :key="c.code" :aria-label="`选择 ${c.code}`" :aria-pressed="color===c.code" :class="{chosen:color===c.code}" @click="emit('choose',c.code)"><i :style="{'--bead-color':c.hex}"></i><b>{{ t(c.code) }}</b></van-button></div>
+    <div class="pin-swatches"><van-button v-for="c in colors" :key="c.code" :aria-label="`选择 ${c.code}`" :aria-pressed="color===c.code" :class="{chosen:color===c.code}" @click="emit('choose',c.code)"><i :style="{'--bead-color':c.hex}">{{ t(c.code) }}</i></van-button></div>
 
   </section>
 </div></Transition>

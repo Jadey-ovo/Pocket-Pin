@@ -10,7 +10,7 @@ describe('HomePage', () => {
       global: { plugins: [createPinia(), router] },
     })
 
-    expect(wrapper.text()).toContain('图纸空间')
+    expect(wrapper.text()).not.toContain('图纸空间')
     expect(wrapper.text()).toContain('导入照片')
     expect(wrapper.text()).toContain('创作图纸')
   })

@@ -13,6 +13,6 @@ export function toPrintProject(project:BeadProject){
 export function previewExport(project:BeadProject,options:PrintExportOptions){return renderPrintCanvas(toPrintProject(project),options)}
 export function exportProject(project:BeadProject, format:'pdf'|'png'|'jpg'|'xlsx', author='',custom:Partial<PrintExportOptions>={}) {
   const p=toPrintProject(project)
-  const options={showColorCodes:true,showGuideLines:true,projectName:project.name,authorName:author,exportBounds:'pattern' as const,...custom}
+  const options={showColorCodes:true,showGuideLines:true,projectName:project.name,authorName:author,exportBounds:'canvas' as const,...custom}
   if(format==='pdf')return downloadPrintPdf(p,options);if(format==='png'||format==='jpg')return downloadPrintImage(p,options,format);return downloadUsageWorkbook(p)
 }

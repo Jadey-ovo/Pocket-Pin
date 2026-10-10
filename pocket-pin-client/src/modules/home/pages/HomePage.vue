@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { showConfirmDialog,showToast } from '@/shared/feedback'
 import { t } from '@/shared/i18n'
-import { computed, ref, watch } from 'vue'
+import { computed, ref, watch, nextTick } from 'vue'
 import { useRouter } from 'vue-router'
-import { Icon as VanIcon, Popup as VanPopup, Field as VanField} from 'vant'
+import { Icon as VanIcon, Popup as VanPopup, Field as VanField, List as VanList} from 'vant'
 import ExportPanel from '../HomeExport.vue'
+import ProjectSwipe from '../ProjectSwipe.vue'
 import '@/modules/studio/studio.css'
 import { readSource, saveSource, deleteSource } from '@/modules/studio/sourceImage'
 import PatternThumbnail from '@/shared/PatternThumbnail.vue'
@@ -16,8 +17,18 @@ import { type BeadProject } from '@/core/project'
 const router=useRouter(),store=useProjectStore(),fileInput=ref<HTMLInputElement|null>(null)
 const exporting=ref(false)
 const renaming=ref(false),renameDraft=ref('')
+const swipedId=ref<string|null>(null)
+const view=ref<'cards'|'list'>('cards'),filterOpen=ref(false)
+const filterOptions=computed(()=>[{id:'all',text:`全部 (${store.projects.length})`},{id:'done',text:`已拼 (${store.projects.filter(p=>p.complete).length})`},{id:'open',text:`待拼 (${store.projects.filter(p=>!p.complete).length})`}])
+watch(view,()=>swipedId.value=null)
 const query=ref(''),filter=ref<'all'|'open'|'done'>('all'),actionMenuId=ref<string|null>(null)
 const visible=computed(()=>store.projects.filter(project=>project.name.toLowerCase().includes(query.value.toLowerCase())&&(filter.value==='all'||(filter.value==='done')===project.complete)))
+const pageSize=24,shown=ref(pageSize),loading=ref(false)
+const loadedProjects=computed(()=>visible.value.slice(0,shown.value))
+const finished=computed(()=>shown.value>=visible.value.length)
+async function loadMore(){shown.value+=pageSize;await nextTick();loading.value=false}
+watch([query,filter],()=>{shown.value=pageSize;swipedId.value=null})
+const projectStats=computed(()=>new Map(store.projects.filter(p=>loadedProjects.value.includes(p)||p.id===actionMenuId.value).map(p=>{const beads=p.cells.filter((c):c is string=>Boolean(c));return [p.id,{count:beads.length,colors:new Set(beads).size}]})))
 const closingProject=ref<BeadProject|null>(null)
 watch(actionMenuId,id=>{if(id)closingProject.value=store.projects.find(p=>p.id===id)||null},{flush:'sync'})
 const actionProject=computed(()=>store.projects.find(project=>project.id===actionMenuId.value)??closingProject.value)
@@ -42,16 +53,16 @@ function saveName(){if(actionProject.value&&renameDraft.value.trim()){store.upda
         <input ref="fileInput" class="visually-hidden" type="file" accept="image/png,image/jpeg,image/webp" @change="importPhoto">
       </section>
 
-      <section class="page-heading workspace-heading"><h1>{{ t('图纸空间') }}</h1></section>
       <div class="search-row"><div class="search-box"><van-icon name="search"/><input v-model="query" :placeholder="t('搜索图纸名称')"></div></div>
-      <div class="filter-pills"><button v-for="item in [{k:'all',v:'全部'},{k:'open',v:'待拼'},{k:'done',v:'已拼'}]" :key="item.k" :class="{active:filter===item.k}" @click="filter=item.k as typeof filter">{{ t(item.v) }}</button></div>
-      <div v-if="visible.length" class="project-list project-grid">
-        <article v-for="project in visible" :key="project.id" class="project-list-card" role="button" tabindex="0" @click="actionMenuId=project.id" @keydown.enter="actionMenuId=project.id" @keydown.space.prevent="actionMenuId=project.id">
-          <div class="project-preview"><pattern-thumbnail :project="project"/></div>
-          <div class="project-meta"><strong>{{project.name}}</strong><span class="pin-bead-count" :aria-label="t(`${project.cells.filter(Boolean).length} 颗拼豆`)"><i class="brand-pin" aria-hidden="true"></i>{{ project.cells.filter(Boolean).length }}</span></div>
+      <van-popup v-model:show="filterOpen" position="bottom" teleport="body" round class="pin-library-filter-sheet"><div class="pin-sheet-handle"/><h3>{{t('筛选图纸')}}</h3><button v-for="option in filterOptions" :key="option.id" :aria-pressed="filter===option.id" :class="{chosen:filter===option.id}" @click="filter=option.id as typeof filter;filterOpen=false"><span>{{t(option.text)}}</span></button></van-popup>
+      <div class="pin-library-toolbar"><div class="pin-view-tabs" role="tablist" :aria-label="t('图纸视图')"><i :class="{'is-list':view==='list'}" aria-hidden="true"/><button role="tab" :aria-selected="view==='cards'" :aria-label="t('卡片视图')" @click="view='cards'"><van-icon name="apps-o"/></button><button role="tab" :aria-selected="view==='list'" :aria-label="t('列表视图')" @click="view='list'"><van-icon name="bars"/></button></div><button class="pin-library-filter" :class="{active:filter!=='all'}" :aria-label="t('筛选图纸')" :aria-expanded="filterOpen" @click="filterOpen=true"><van-icon name="filter-o"/></button></div>
+      <van-list v-if="visible.length" v-model:loading="loading" :finished="finished" :offset="240" @load="loadMore"><div class="project-list" :class="view==='cards'?'project-grid':'pin-library-list'">
+        <project-swipe v-for="project in loadedProjects" :key="project.id" :enabled="view==='list'" :open="swipedId===project.id" @update:open="swipedId=$event?project.id:null"><template #actions><button :aria-label="t('编辑')" @click.stop="swipedId=null;router.push(`/studio/${project.id}`)"><tool-glyph name="pencil"/><span>{{t('编辑')}}</span></button><button :aria-label="t('复制图纸')" @click.stop="swipedId=null;duplicate(project.id,project.name)"><tool-glyph name="copy"/><span>{{t('复制图纸')}}</span></button><button :aria-label="t('导出')" @click.stop="swipedId=null;actionMenuId=project.id;exporting=true"><tool-glyph name="download"/><span>{{t('导出')}}</span></button><button class="danger" :aria-label="t('删除')" @click.stop="swipedId=null;remove(project.id,project.name)"><van-icon name="delete-o"/><span>{{t('删除')}}</span></button></template><article class="project-list-card" role="button" tabindex="0" @click="actionMenuId=project.id" @keydown.enter="actionMenuId=project.id" @keydown.space.prevent="actionMenuId=project.id">
+          <div class="project-preview"><pattern-thumbnail :project="project"/><span v-if="project.complete" class="pin-card-done" :aria-label="t('已拼')" :title="t('已拼')"><svg class="pin-done-check" viewBox="0 0 24 24" aria-hidden="true"><path d="m5 12 4.5 4.5L19 7"/></svg></span></div>
+          <div class="project-meta-window"><div class="project-meta"><strong>{{project.name}}</strong><div class="pin-card-stats" :aria-label="t(`尺寸 ${project.width} × ${project.height} 格，${projectStats.get(project.id)?.colors} 色，消耗 ${projectStats.get(project.id)?.count} 颗`)"><span>{{project.width}} × {{project.height}}</span><span>{{t(`${projectStats.get(project.id)?.colors||0} 色`)}}</span><span>{{t(`${projectStats.get(project.id)?.count||0} 颗`)}}</span></div></div></div>
 
-        </article>
-      </div>
+        </article></project-swipe>
+      </div></van-list>
       <div v-else class="empty-state"><van-icon name="flower-o"/><strong>{{ t('没有找到图纸') }}</strong><span>{{ t('换个关键词或开始一张新作品吧。') }}</span></div>
       <van-popup v-model:show="projectSheetOpen" @closed="closingProject=null" position="bottom" transition="pin-sheet-slide" teleport="body" :lock-scroll="true" class="more-sheet share-sheet pin-project-sheet" :class="{'is-exporting':exporting}">
         <div v-if="actionProject" class="sheet-content">
@@ -64,7 +75,7 @@ function saveName(){if(actionProject.value&&renameDraft.value.trim()){store.upda
 
           <Transition name="pin-export-page" mode="out-in"><div v-if="exporting" key="export" class="pin-home-export"><export-panel :project="actionProject"/></div>
           <div v-else key="preview" class="pin-project-preview-page">
-            <div class="pin-sheet-pattern"><pattern-thumbnail :project="actionProject"/></div>
+            <div class="pin-sheet-pattern"><pattern-thumbnail :project="actionProject"/></div><div class="pin-sheet-stats" :aria-label="t('图纸信息')"><span>{{actionProject.width}} × {{actionProject.height}} {{t('格')}}</span><span>{{t(`${projectStats.get(actionProject.id)?.colors||0} 色`)}}</span><span>{{t(`${projectStats.get(actionProject.id)?.count||0} 颗`)}}</span></div>
             <div class="share-sheet-actions pin-project-action-grid">
               <button @click="router.push(`/studio/${actionProject.id}`);projectSheetOpen=false"><tool-glyph name="pencil"/><span>{{ t('编辑') }}</span></button>
               <button @click="duplicate(actionProject.id,actionProject.name)"><tool-glyph name="copy"/><span>{{ t('复制图纸') }}</span></button>
