@@ -46,3 +46,5 @@ Object.assign(words,{
 'PNG 保留透明背景；JPG 和 PDF 使用白色背景':'PNG keeps transparency. JPG and PDF use white.',
 '缩小':'Zoom out','放大':'Zoom in','重置缩放':'Reset zoom','· 影响':'· affected','，画布中可预览换色效果。':'. Preview on the board.'
 })
+
+Object.assign(words,{'隐藏参考图':'Hide reference','拖动图片，双指缩放；保存后可在参考图上绘制':'Drag to position · Pinch to zoom · Save to draw over the reference'})

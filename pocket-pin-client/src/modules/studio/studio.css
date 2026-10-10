@@ -251,3 +251,7 @@ html[lang=en] .pin-tool{min-width:84px}html[lang=en] .pin-mode-controls p{font-s
 .pin-studio .pin-mode-controls>p:only-child{margin:0;padding:0 12px;line-height:20px}
 .pin-studio .pin-mode-controls:has(>.pin-recolor-controls:only-child):not(:has(.pin-palette-dock)){justify-content:flex-end;padding-bottom:12px}
 .pin-studio .pin-mode-controls>.pin-recolor-controls:only-child>p:only-child{margin:0;padding:0 12px;line-height:20px}
+
+.pin-reference-controls{display:flex;align-items:center;gap:12px;width:100%}
+.pin-reference-controls .pin-range{flex:1;min-width:0;margin:0}
+.pin-reference-toggle{flex-shrink:0}
