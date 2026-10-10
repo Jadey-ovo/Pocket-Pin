@@ -3,5 +3,5 @@ dist/
 .DS_Store
 .vite/
 
-# Local research material and external reference projects
+# Exclude local-only material
 reference/

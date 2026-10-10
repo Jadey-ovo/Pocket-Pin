@@ -19,7 +19,7 @@ const MAX_EXPORT_CANVAS_SIDE = 12000;
 const PRINT_EXPORT_SCALE = PRINT_EXPORT_PPI / CSS_PIXEL_PPI;
 
 export function downloadProjectJson(project: BeadProject): void {
-  downloadBlob(`${safeName(project.name || '\u62fc\u8c46\u7f16\u8f91\u8bb0\u5f55')}-\u7f16\u8f91\u8bb0\u5f55_perler.json`, JSON.stringify(project, null, 2), 'application/json');
+  downloadBlob(`${safeName(project.name || '\u62fc\u8c46\u7f16\u8f91\u8bb0\u5f55')}-\u7f16\u8f91\u8bb0\u5f55.json`, JSON.stringify(project, null, 2), 'application/json');
 }
 
 export function downloadUsageCsv(project: BeadProject, usage: UsageRow[]): void {
@@ -584,7 +584,7 @@ function safeName(name: string): string {
     .replace(/[\\/:*?"<>|]+/g, '-')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-')
-    .replace(/^-|-$/g, '') || 'perler-pattern';
+    .replace(/^-|-$/g, '') || 'pocket-pin-pattern';
 }
 
 function printDisplayName(options: PrintExportOptions): string {
