@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ConfigProvider as VanConfigProvider } from 'vant'
+import StorageNotice from './shared/StorageNotice.vue'
 
 const themeVars = {
   primaryColor: '#58aa98',
@@ -15,6 +16,7 @@ const themeVars = {
 
 <template>
   <van-config-provider :theme-vars="themeVars">
+    <storage-notice/>
     <router-view v-slot="{ Component, route }"><Transition name="pin-route" mode="out-in"><component :is="Component" :key="route.path"/></Transition></router-view>
   </van-config-provider>
 </template>
