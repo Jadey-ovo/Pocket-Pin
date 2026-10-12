@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import {track} from '@/shared/analytics'
 import { showConfirmDialog,showToast } from '@/shared/feedback'
 import { t } from '@/shared/i18n'
 import { computed, ref, watch, nextTick } from 'vue'
@@ -36,7 +37,7 @@ const projectSheetOpen=computed({get:()=>Boolean(actionMenuId.value),set:(show:b
 
 function newProject(){const project=store.create();router.push(`/studio/${project.id}`)}
 function choosePhoto(){fileInput.value?.click()}
-function importPhoto(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type))return showToast('请选择 PNG、JPG 或 WebP 图片');const project=store.create(file.name.replace(/\.[^.]+$/,'')||'我的图纸');sessionStorage.setItem(`pocket-pin:import:${project.id}`,URL.createObjectURL(file));input.value='';router.push(`/studio/${project.id}?import=1`)}
+function importPhoto(event:Event){const input=event.target as HTMLInputElement,file=input.files?.[0];if(!file)return;if(!/^image\/(png|jpeg|webp)$/.test(file.type)){track('image_import_failure',{reason:'unsupported_format'});return showToast('请选择 PNG、JPG 或 WebP 图片')};const project=store.create(file.name.replace(/\.[^.]+$/,'')||'我的图纸');sessionStorage.setItem(`pocket-pin:import:${project.id}`,URL.createObjectURL(file));input.value='';router.push(`/studio/${project.id}?import=1`)}
 async function remove(id:string,name:string){try{await showConfirmDialog({title:`删除「${name}」？`,message:'删除后无法恢复。',confirmButtonText:'确认删除'});store.remove(id);try{await deleteSource(id)}catch{}}catch{}actionMenuId.value=null}
 async function duplicate(id:string,name:string){try{await showConfirmDialog({title:`复制「${name}」？`,message:'保留原图，创建副本。',confirmButtonText:'确认复制'});const copy=store.duplicate(id);if(copy){try{const source=await readSource(id);if(source)await saveSource(copy.id,source)}catch{}showToast('图纸副本已创建')}}catch{}actionMenuId.value=null}
 function setComplete(complete:boolean){if(actionProject.value&&actionProject.value.complete!==complete){store.update({...actionProject.value,complete});showToast(complete?'已标记为已拼':'已标记为待拼')}}
