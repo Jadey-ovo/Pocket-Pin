@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ConfigProvider as VanConfigProvider } from 'vant'
+import AppToast from './shared/AppToast.vue'
 import StorageNotice from './shared/StorageNotice.vue'
 
 const themeVars = {
@@ -17,6 +18,7 @@ const themeVars = {
 <template>
   <van-config-provider :theme-vars="themeVars">
     <storage-notice/>
+    <app-toast/>
     <router-view v-slot="{ Component, route }"><Transition name="pin-route" mode="out-in"><component :is="Component" :key="route.path"/></Transition></router-view>
   </van-config-provider>
 </template>

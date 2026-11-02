@@ -1,5 +1,8 @@
 // MARD 211 display colors restored from the repository's original palette (e609809).
-// Hex values were sourced from a third-party reference and are approximate screen colors.
+// Hex values are approximate screen colors, not manufacturer measurements.
+// Audited 2026-10-13: all 211 entries match Zippland/perler-beads
+// src/app/colorSystemMapping.json at 2519daf1628534e414bc7a10f0472dc32000bde4.
+// See docs/生成算法与色卡核对-2026-10-13.md; other public MARD tables differ.
 import type { BeadColor } from './project'
 
 export const palette: BeadColor[] = [

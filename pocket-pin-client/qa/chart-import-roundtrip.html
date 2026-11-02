@@ -1,0 +1,23 @@
+<!doctype html><html><meta charset="utf-8"><title>图纸识别本地验收</title><body><h1>图纸识别本地验收</h1><select id="size"><option>52</option><option>78</option><option>104</option></select><button id="run">测试 52×52 / 40 色</button><pre id="log"></pre><div id="images"></div><script type="module">
+import {renderPrintCanvas} from '/src/modules/studio/engine/print.ts';
+import {createProject} from '/src/modules/studio/engine/printModel.ts';
+import {palette} from '/src/core/project.ts';
+import {locateLegend,parseLegend,parseDigitalLegend,flattenLegend,detectGrid,mapChart} from '/src/modules/chartImport/recognition.ts';
+import {createChartOcr} from '/src/modules/chartImport/ocr.ts';
+const log=document.querySelector('#log'),images=document.querySelector('#images');
+function canvasOf(r){const c=document.createElement('canvas');c.width=r.width;c.height=r.height;c.getContext('2d').putImageData(new ImageData(r.data,r.width,r.height),0,0);return c}
+const colors=['A5','A13','A21','A26','B8','B15','B21','B22','B23','B25','B26','C1','C4','C7','C8','C12','C16','C19','C20','C21','C23','C24','C28','C29','D4','D10','D22','E21','E23','F7','F10','F11','G4','G8','G12','G17','H2','H6','H16','M1'];
+document.querySelector('#run').onclick=async()=>{log.textContent='识别中';images.replaceChildren();const start=performance.now();let ocr;
+try{
+ const size=Number(document.querySelector('#size').value);const p=createProject(size,size,'多色识别验收');p.cells=Array.from({length:size*size},(_,i)=>'mard-'+colors[(Math.floor(i/size/5)*11+Math.floor(i%size/5))%colors.length].toLowerCase());p.layers[0].cells=p.cells;
+ const raw=renderPrintCanvas(p,{showColorCodes:true,showGuideLines:true,showTitle:true,showUsage:true});
+ const image=document.createElement('canvas'),scale=Math.min(1,2200/Math.max(raw.width,raw.height));image.width=Math.round(raw.width*scale);image.height=Math.round(raw.height*scale);image.getContext('2d').drawImage(raw,0,0,image.width,image.height);image.style.width='400px';images.append(image);const download=document.createElement('a');download.textContent='下载验收原图';download.download='pocketpin-roundtrip-'+size+'.png';download.href=raw.toDataURL();images.prepend(download);
+ const r={width:image.width,height:image.height,data:image.getContext('2d').getImageData(0,0,image.width,image.height).data},t=performance.now(),box=locateLegend(r);log.textContent=JSON.stringify({box,layoutMs:performance.now()-t})+'\n';if(!box)throw Error('图例定位失败');
+ const crop=document.createElement('canvas'),s=Math.min(3,Math.max(2.6,1800/box.width),Math.sqrt(3000000/(box.width*box.height)));crop.width=Math.round(box.width*s);crop.height=Math.round(box.height*s);crop.getContext('2d').drawImage(image,box.x,box.y,box.width,box.height,0,0,crop.width,crop.height);crop.style.width='800px';images.append(crop);
+ const roi={width:crop.width,height:crop.height,data:crop.getContext('2d').getImageData(0,0,crop.width,crop.height).data};ocr=createChartOcr(()=>{});const t2=performance.now();let words=await ocr.read(crop),entries=parseLegend(words,roi);const fast=parseDigitalLegend(words,roi);if(fast.length>entries.length)entries=fast;log.textContent+=JSON.stringify({ocr1Ms:performance.now()-t2,entries})+'\n';
+ if(entries.length<box.swatches*.8||entries.some(e=>e.count===null||e.confidence<65)){const t3=performance.now();const flat=canvasOf(flattenLegend(roi));flat.style.width='1100px';images.append(flat);words=[...words,...await ocr.read(flat)];entries=parseLegend(words,roi);const fast2=parseDigitalLegend(words,roi);if(fast2.length>entries.length)entries=fast2;log.textContent+=JSON.stringify({ocr2Ms:performance.now()-t3,entries})+'\n'}
+ const expected={};p.cells.forEach(c=>{const code=c.slice(5).toUpperCase();expected[code]=(expected[code]??0)+1});const incorrect=Object.entries(expected).filter(([code,n])=>entries.find(e=>e.code===code)?.count!==n);
+ const t4=performance.now(),grid=detectGrid(r);const mapped=grid?mapChart(r,grid,entries):null;
+ log.textContent+=JSON.stringify({expectedColors:Object.keys(expected).length,readColors:entries.length,incorrect,grid,uncertain:mapped?.uncertain.length,cellErrors:mapped?.cells.filter((c,i)=>c!==p.cells[i]?.slice(5).toUpperCase()).length,gridMapMs:performance.now()-t4,totalMs:performance.now()-start},null,2)
+}catch(e){log.textContent+='\n'+e.stack}finally{ocr?.cancel()}}
+</script></body></html>

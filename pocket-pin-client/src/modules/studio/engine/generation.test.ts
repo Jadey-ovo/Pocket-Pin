@@ -35,11 +35,19 @@ describe('complete feature generation', () => {
     const cells=generateCells(input)
     for (let y=0;y<3;y++) expect(cells[y*5+1]).toBe('H5')
   })
-  it('does not invent many shades for a nearly flat noisy surface', () => {
+  it.each(['cartoon','realistic'] as const)('does not invent many shades for a nearly flat noisy surface in %s mode', style => {
     const input = fixture(12, 12, (x,y) => {const v=190+(x*17+y*7)%7;return [v,v,v]})
-    input.allowed=[]; input.maxColors=24
+    input.allowed=[]; input.maxColors=211; input.style=style
     const cells=generateCells(input)
     expect(new Set(cells).size).toBeLessThanOrEqual(2)
     expect(cells.every(c=>!!colorByCode(c))).toBe(true)
   })
 })
+
+it.each(['cartoon','realistic'] as const)('repeats identical pixels and parameters exactly in %s mode',style=>{
+ const input=fixture(20,20,(x,y)=>[(x*19+y*7)%256,(x*3+y*17)%256,(x*11+y*5)%256],6);
+ input.allowed=[];input.maxColors=211;input.style=style;
+ const original=new Uint8ClampedArray(input.pixels),first=generateCells(input);
+ for(let run=0;run<3;run++)expect(generateCells({...input,pixels:new Uint8ClampedArray(original)})).toEqual(first);
+ expect(input.pixels).toEqual(original);
+});

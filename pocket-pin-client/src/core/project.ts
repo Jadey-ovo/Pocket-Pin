@@ -16,7 +16,7 @@ export const makeProject = (name = '未命名图纸', width = 52, height = 52): 
 export function normalizeProject(value: unknown): BeadProject | null {
   if (!value || typeof value !== 'object') return null
   const item = value as BeadProject
-  if (!Number.isInteger(item.width) || !Number.isInteger(item.height) || item.width < 1 || item.height < 1 || item.width > 180 || item.height > 180 || !Array.isArray(item.cells) || item.cells.length !== item.width * item.height) return null
+  if (!Number.isInteger(item.width) || !Number.isInteger(item.height) || item.width < 1 || item.height < 1 || item.width * item.height > 1048576 || !Array.isArray(item.cells) || item.cells.length !== item.width * item.height) return null
   const clean = (cells: Array<string | null>) => Array.from({ length: item.width * item.height }, (_, i) => colors.has(cells[i] || '') ? cells[i] : null)
   const source = Array.isArray(item.layers) ? item.layers.filter(l => l && l.type !== 'reference' && Array.isArray(l.cells)) : []
   let cells = clean(item.cells)

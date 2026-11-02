@@ -37,3 +37,18 @@ describe('board boundary gestures',()=>{
 describe('wheel zoom',()=>{
  it.each([0,1,2])('zooms in both directions with delta mode %s',async(deltaMode)=>{const w=setup();const before=w.emitted('scale')!.at(-1)![0] as number;w.element.dispatchEvent(new WheelEvent('wheel',{deltaY:-3,deltaMode,clientX:200,clientY:200,cancelable:true}));const enlarged=w.emitted('scale')!.at(-1)![0] as number;expect(enlarged).toBeGreaterThan(before);w.element.dispatchEvent(new WheelEvent('wheel',{deltaY:3,deltaMode,clientX:200,clientY:200,cancelable:true}));expect(w.emitted('scale')!.at(-1)![0]).toBeLessThan(enlarged);expect(w.emitted('change')).toBeUndefined();w.unmount()});
 });
+
+describe('eyedropper preview',()=>{
+ it('tracks the sampled bead and commits only on release without painting',async()=>{
+  const w=setup(),cells=Array(64).fill('H7');cells[1]='H1';await w.setProps({tool:'eyedropper',cells});
+  await event(w,'pointerdown',1,90,90);expect(w.find('.pin-pick-magnifier-label').text()).toBe('H7');
+  await event(w,'pointermove',1,122,90);expect(w.find('.pin-pick-magnifier-label').text()).toBe('H1');expect(w.emitted('pick')).toBeUndefined();
+  await event(w,'pointerup',1,122,90);expect(w.emitted('pick')![0]).toEqual(['H1']);expect(w.find('.pin-pick-magnifier').exists()).toBe(false);expect(w.emitted('change')).toBeUndefined();w.unmount();
+ });
+ it('clears the magnifier and cancels sampling for a pinch gesture',async()=>{
+  const w=setup();await w.setProps({tool:'eyedropper',cells:Array(64).fill('H7')});await event(w,'pointerdown',1,90,90);await event(w,'pointerdown',2,250,250);expect(w.find('.pin-pick-magnifier').exists()).toBe(false);await event(w,'pointerup',2,250,250);await event(w,'pointerup',1,90,90);expect(w.emitted('pick')).toBeUndefined();w.unmount();
+ });
+ it('labels empty beads and never selects an empty color',async()=>{
+  const w=setup();await w.setProps({tool:'eyedropper'});await event(w,'pointerdown',1,90,90);expect(w.find('.pin-pick-magnifier-label').text()).toBe('空格');await event(w,'pointercancel',1,90,90);expect(w.find('.pin-pick-magnifier').exists()).toBe(false);expect(w.emitted('pick')).toBeUndefined();w.unmount();
+ });
+});

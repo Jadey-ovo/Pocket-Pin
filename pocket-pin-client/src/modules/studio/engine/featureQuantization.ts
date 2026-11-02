@@ -8,29 +8,54 @@ const distance=(a:number[],b:number[])=>.8*(a[0]-b[0])**2+2*(a[1]-b[1])**2+2*(a[
 type Color={code:string;rgb:number[]};
 export function featureQuantize(values:(number[]|null)[],width:number,choices:Color[],limit:number,preserve:boolean,adjustBoundaries=preserve,importance?:Uint8Array):(string|null)[]{
  const labs=values.map(v=>v?perceptual(v):null),palette=choices.map(c=>({...c,lab:perceptual(c.rgb)}));
- const weights=labs.map((v,i)=>{if(!v)return 0;let contrast=0;for(const j of neighbors(i,width,labs.length)){const n=labs[j];if(n)contrast=Math.max(contrast,Math.sqrt(distance(v,n)))}return (1+(preserve?5:1)*Math.min(1,contrast/25))*(importance?.[i]??1)});
+ // Every part of the image receives structural protection, whether or not it
+ // contains a face. Local contrast covers silhouettes, text, foliage and objects;
+ // uncommon color families receive a bounded boost, never an unlimited veto.
+ const families=new Map<string,number>();
+ const familyKeys=labs.map(v=>v?`${Math.round(v[1]/8)},${Math.round(v[2]/8)}`:null);
+ familyKeys.forEach(key=>{if(key!==null)families.set(key,(families.get(key)??0)+1)});
+ const occupied=labs.filter(Boolean).length;
+ const weights=labs.map((v,i)=>{
+  if(!v)return 0;
+  let contrast=0;for(const j of neighbors(i,width,labs.length)){const n=labs[j];if(n)contrast=Math.max(contrast,Math.sqrt(distance(v,n)))}
+  const rarity=Math.min(2,Math.sqrt(occupied/Math.max(1,(families.get(familyKeys[i]!)??1)*16)));
+  const semantic=Math.max(1,Math.min(4,importance?.[i]??1));
+  return (1+3*Math.min(1,contrast/25))*(1+rarity*.5)*semantic;
+ });
  const histogram=new Map<string,{lab:number[];weight:number}>();
- labs.forEach((v,i)=>{if(!v)return;const key=v.map(x=>Math.round(x)).join(',');const bin=histogram.get(key);if(bin)bin.weight+=weights[i];else histogram.set(key,{lab:v,weight:weights[i]})});
- const bins=[...histogram.values()];if(!bins.length)return values.map(()=>null);
+ labs.forEach((v,i)=>{
+  if(!v)return;const key=v.map(x=>Math.round(x)).join(','),w=weights[i],bin=histogram.get(key);
+  if(bin){bin.lab.forEach((_,ch)=>bin.lab[ch]+=v[ch]*w);bin.weight+=w}
+  else histogram.set(key,{lab:v.map(x=>x*w),weight:w});
+ });
+ const bins=[...histogram.entries()].sort(([a],[b])=>a.localeCompare(b)).map(([,bin])=>({lab:bin.lab.map(x=>x/bin.weight),weight:bin.weight}));
+ if(!bins.length)return values.map(()=>null);
  const nearest=(v:number[],list:typeof palette)=>list.reduce((best,c)=>distance(v,c.lab)<distance(v,best.lab)?c:best,list[0]);
- const selected:typeof palette=[];const errors=bins.map(()=>Infinity);
- // Seed with a representative color, then spend the budget on remaining visual error.
- let next=bins.reduce((a,b)=>a.weight>b.weight?a:b).lab;
+ const selected:typeof palette=[],errors=bins.map(()=>Infinity);
+ const preferred=bins.map(bin=>nearest(bin.lab,palette));
+ const baseline=bins.map((bin,i)=>distance(bin.lab,preferred[i].lab));
+ const minSeparation=preserve?36:2.25,minImprovement=preserve?25:4;
+ // Add a bead color only if it can remove perceptible, avoidable error. Absolute
+ // source error can remain high outside the bead gamut; filling the budget then
+ // would introduce unrelated shades without improving the picture.
  for(let k=0;k<Math.min(limit,palette.length,bins.length);k++){
-  const available=palette.filter(c=>!selected.some(s=>s.code===c.code || distance(s.lab,c.lab)<(preserve?36:9)));
-  if(!available.length)break;
-  const chosen=nearest(next,available);selected.push(chosen);
-  let score=-1,index=0;
-  bins.forEach((bin,i)=>{errors[i]=Math.min(errors[i],distance(bin.lab,chosen.lab));const loss=errors[i]*bin.weight;if(loss>score){score=loss;index=i}});
-  // A color limit is a ceiling: stop when remaining shades are perceptually close.
-  if(Math.max(...errors)<(preserve?25:6.25))break;next=bins[index].lab;
+  let index=-1,score=-1;
+  bins.forEach((bin,i)=>{
+   const c=preferred[i];if(selected.some(s=>s.code===c.code||distance(s.lab,c.lab)<minSeparation))return;
+   const improvement=errors[i]-baseline[i];if(selected.length&&improvement<=minImprovement)return;
+   const loss=selected.length?improvement*bin.weight:bin.weight;
+   if(loss>score){score=loss;index=i}
+  });
+  if(index<0)break;
+  const chosen=preferred[index];selected.push(chosen);
+  bins.forEach((bin,i)=>{errors[i]=Math.min(errors[i],distance(bin.lab,chosen.lab))});
  }
  // Refine representative colors, constrained to real, allowed bead colors.
  for(let iteration=0;iteration<3;iteration++){
   const sums=selected.map(()=>({sum:[0,0,0],weight:0}));
   bins.forEach(bin=>{const c=nearest(bin.lab,selected),i=selected.indexOf(c),w=bin.weight;sums[i].weight+=w;bin.lab.forEach((v,ch)=>sums[i].sum[ch]+=v*w)});
   const used=new Set<string>();
-  selected.forEach((c,i)=>{const sum=sums[i];const available=palette.filter(p=>!used.has(p.code) && selected.every((other,j)=>j===i || distance(p.lab,other.lab)>=(preserve?36:9)));if(!available.length){used.add(c.code);return;}const replacement=sum.weight?nearest(sum.sum.map(v=>v/sum.weight),available):nearest(c.lab,available);selected[i]=replacement;used.add(replacement.code)});
+  selected.forEach((c,i)=>{const sum=sums[i];const available=palette.filter(p=>!used.has(p.code) && selected.every((other,j)=>j===i || distance(p.lab,other.lab)>=minSeparation));if(!available.length){used.add(c.code);return;}const replacement=sum.weight?nearest(sum.sum.map(v=>v/sum.weight),available):nearest(c.lab,available);selected[i]=replacement;used.add(replacement.code)});
  }
  const result=labs.map(v=>v?nearest(v,selected):null);
  if(adjustBoundaries){

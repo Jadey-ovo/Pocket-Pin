@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { colorByCode, type Tool } from '@/core/project'
 import { bounds, rectIndices, gridOpacity, lineCells, selectionRect, zoomAround, type Cells, type Rect } from './engine/operations'
 const props = withDefaults(defineProps<{ width: number; height: number; cells: Cells; tool: Tool; color: string; grid?: 'auto'|'off'|'always'; coordinates?: boolean; boards?: boolean; codes?: boolean; round?: boolean; locked?: boolean; visible?: boolean; selection?: Rect|null; cleanSelection?:boolean;referenceEditing?:boolean;beadOpacity?:number; highlights?: number[]; reference?: string; referenceOpacity?: number; referenceScale?: number; referenceX?: number; referenceY?: number }>(), { grid:'auto', visible:true, highlights:()=>[], referenceOpacity:.35, referenceScale:1, referenceX:0, referenceY:0 })
@@ -10,6 +10,9 @@ let previewView:{size:number;x:number;y:number}|null=null
 function beginPreview(){if(previewView)return;resetGesture();previewView={size,x:ox,y:oy};fit(true)}
 function endPreview(){if(!previewView)return;size=previewView.size;ox=previewView.x;oy=previewView.y;previewView=null;scaleLabel.value=Math.round(size/12*100);emit('scale',scaleLabel.value);schedule()}
 const pointers = new Map<number, { x: number; y: number }>()
+const sampleIndex=ref(-1),sampleLeft=ref(true)
+const sampleCode=computed(()=>sampleIndex.value<0?null:props.cells[sampleIndex.value])
+const sampleCells=computed(()=>Array.from({length:25},(_,n)=>{const x=sampleIndex.value%props.width+n%5-2,y=Math.floor(sampleIndex.value/props.width)+Math.floor(n/5)-2;const code=x<0||y<0||x>=props.width||y>=props.height?null:props.cells[y*props.width+x];return colorByCode(code)?.hex||'var(--animal-paper)'}))
 let magnifierLeft = true
 let navigating = false, draft: Cells|null = null, last = -1, startIndex = -1, endIndex = -1, pointerKind = '', focusIndex = -1, downTool: Tool = 'pan'
 function point(e: PointerEvent | WheelEvent) { const r = host.value!.getBoundingClientRect(); return { x:e.clientX-r.left, y:e.clientY-r.top } }
@@ -20,7 +23,7 @@ function schedule() { if(!frame) frame=requestAnimationFrame(()=>{frame=0;draw()
 function zoomTo(next: number, p = {x:vw/2,y:vh/2}) { const view=zoomAround({x:ox,y:oy,size},p,Math.max(.25,Math.min(96,next))); size=view.size;ox=view.x;oy=view.y;constrain();scaleLabel.value=Math.round(size/12*100);emit('scale',scaleLabel.value);schedule() }
 function pinchTo(next:number,from:{x:number;y:number},to:{x:number;y:number}){const view=zoomAround({x:ox,y:oy,size},from,Math.max(.25,Math.min(96,next)));size=view.size;ox=view.x+to.x-from.x;oy=view.y+to.y-from.y;constrain();scaleLabel.value=Math.round(size/12*100);emit('scale',scaleLabel.value);schedule()}
 function fit(content=false) { if(host.value){const viewport=host.value.getBoundingClientRect();vw=viewport.width;vh=viewport.height} const r=content?bounds(props.cells,props.width,props.height):{x:0,y:0,width:props.width,height:props.height};size=Math.max(.25,Math.min(32,Math.min((vw-48)/r.width,(vh-48)/r.height)));ox=(vw-r.width*size)/2-r.x*size;oy=(vh-r.height*size)/2-r.y*size;fitted=true;scaleLabel.value=Math.round(size/12*100);emit('scale',scaleLabel.value);schedule() }
-function cancelDraft() { draft=null;last=startIndex=endIndex=-1;focusIndex=-1;schedule() }
+function cancelDraft() { sampleIndex.value=-1;draft=null;last=startIndex=endIndex=-1;focusIndex=-1;schedule() }
 function report(i:number){if(['pencil','eraser'].includes(props.tool)&&i>=0)emit('context',`第${i%props.width+1}列 · 第${Math.floor(i/props.width)+1}行 · ${props.cells[i]||'空格'}`)}
 function resetGesture() { emit('context',''); pointers.clear();navigating=false;cancelDraft();emit('busy',false) }
 function paint(index:number) { if(index<0){last=-1;return} if(!draft)draft=[...props.cells]; for(const i of last<0?[index]:lineCells(last,index,props.width))draft[i]=downTool==='eraser'?null:props.color;last=index;focusIndex=index;schedule() }
@@ -29,11 +32,11 @@ function down(e:PointerEvent) {
   if(e.button!==0&&e.button!==1&&e.button!==2)return
   host.value!.setPointerCapture(e.pointerId);pointers.set(e.pointerId,point(e));emit('busy',true)
   if(pointers.size>1){navigating=true;cancelDraft();return}
-  magnifierLeft=point(e).x>=vw/2;pointerKind=e.pointerType;downTool=props.tool;navigating=props.tool==='pan'||e.button!==0
+  magnifierLeft=point(e).x>=vw/2;sampleLeft.value=magnifierLeft;pointerKind=e.pointerType;downTool=props.tool;navigating=props.tool==='pan'||e.button!==0
   if(navigating)return
   if(props.locked&&props.tool!=='eyedropper') { hint.value='图纸已锁定，请先在设置中解锁';return }
   const p=point(e),i=indexAt(p);if(i<0)return
-  startIndex=endIndex=i;focusIndex=i;report(i)
+  startIndex=endIndex=i;focusIndex=i;if(downTool==='eyedropper')sampleIndex.value=i;report(i)
   if(props.tool==='pencil'||props.tool==='eraser')paint(i)
 
   schedule()
@@ -45,7 +48,7 @@ function move(e:PointerEvent) {
   if(pointers.size>=2){const after=[...pointers.values()],a=before[0],b=before[1],c=after[0],d=after[1],mid={x:(a.x+b.x)/2,y:(a.y+b.y)/2},nextMid={x:(c.x+d.x)/2,y:(c.y+d.y)/2},dist=Math.hypot(a.x-b.x,a.y-b.y);if(dist>0)pinchTo(size*Math.hypot(c.x-d.x,c.y-d.y)/dist,mid,nextMid);return}
   if(navigating){ox+=p.x-old.x;oy+=p.y-old.y;constrain();schedule();return}
   if(startIndex<0)return
-  const i=downTool==='fill'||downTool==='select'?clampedIndexAt(p):indexAt(p);if(i>=0){endIndex=i;focusIndex=i;report(i);hint.value=`第 ${i%props.width+1} 列 · 第 ${Math.floor(i/props.width)+1} 行 · ${props.cells[i]||'空格'}`}
+  const i=downTool==='fill'||downTool==='select'?clampedIndexAt(p):indexAt(p);if(downTool==='eyedropper')sampleIndex.value=i;if(i>=0){endIndex=i;focusIndex=i;report(i);hint.value=`第 ${i%props.width+1} 列 · 第 ${Math.floor(i/props.width)+1} 行 · ${props.cells[i]||'空格'}`}
   if((downTool==='paste'||downTool==='move')&&i>=0)emit('place',i);if(downTool==='pencil'||downTool==='eraser')paint(i);else schedule()
 }
 function up(e:PointerEvent) {
@@ -96,7 +99,7 @@ function draw() {
   if(!previewView&&props.highlights.length){const selected=new Set(props.highlights);ctx.beginPath();for(const i of selected){const col=i%props.width,row=Math.floor(i/props.width),x=ox+col*size,y=oy+row*size;if(col===0||!selected.has(i-1)){ctx.moveTo(x,y);ctx.lineTo(x,y+size)}if(col===props.width-1||!selected.has(i+1)){ctx.moveTo(x+size,y);ctx.lineTo(x+size,y+size)}if(row===0||!selected.has(i-props.width)){ctx.moveTo(x,y);ctx.lineTo(x+size,y)}if(row===props.height-1||!selected.has(i+props.width)){ctx.moveTo(x,y+size);ctx.lineTo(x+size,y+size)}}if(!props.cleanSelection){ctx.strokeStyle=ink;ctx.lineWidth=3;ctx.stroke()}ctx.strokeStyle='#fff';ctx.lineWidth=1.5;ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([])}
   const rect=startIndex>=0&&endIndex>=0&&(downTool==='select'||downTool==='fill')?selectionRect(startIndex,endIndex,props.width):props.selection
   if(rect&&!previewView){ctx.strokeStyle=props.cleanSelection?'#fff':primary;ctx.lineWidth=2;ctx.setLineDash([6,4]);ctx.strokeRect(ox+rect.x*size,oy+rect.y*size,rect.width*size,rect.height*size);ctx.setLineDash([])}
-  if(focusIndex>=0&&!navigating&&['pencil','eraser'].includes(downTool)){const x=ox+focusIndex%props.width*size,y=oy+Math.floor(focusIndex/props.width)*size;ctx.strokeStyle=ink;ctx.lineWidth=2;if(downTool==='eraser'){ctx.beginPath();ctx.arc(x+size/2,y+size/2,Math.max(4,size*.35),0,Math.PI*2);ctx.fillStyle=paper;ctx.globalAlpha=.7;ctx.fill();ctx.globalAlpha=1;ctx.stroke()}else ctx.strokeRect(x,y,size,size)
+  if(focusIndex>=0&&!navigating&&['pencil','eraser','eyedropper'].includes(downTool)){const x=ox+focusIndex%props.width*size,y=oy+Math.floor(focusIndex/props.width)*size;ctx.strokeStyle=ink;ctx.lineWidth=2;if(downTool==='eraser'){ctx.beginPath();ctx.arc(x+size/2,y+size/2,Math.max(4,size*.35),0,Math.PI*2);ctx.fillStyle=paper;ctx.globalAlpha=.7;ctx.fill();ctx.globalAlpha=1;ctx.stroke()}else ctx.strokeRect(x,y,size,size)
     if(pointerKind==='touch'&&draft){const mx=magnifierLeft?8:Math.max(8,vw-98),my=8;ctx.fillStyle=paper;ctx.fillRect(mx,my,90,90);for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){const cx=focusIndex%props.width+dx,cy=Math.floor(focusIndex/props.width)+dy;if(cx<0||cx>=props.width||cy<0||cy>=props.height)continue;ctx.fillStyle=colorByCode(cells[cy*props.width+cx])?.hex||paper;ctx.fillRect(mx+(dx+1)*30,my+(dy+1)*30,30,30)}ctx.strokeStyle=primary;ctx.strokeRect(mx+30,my+30,30,30);ctx.strokeRect(mx,my,90,90)}
   }
 }
@@ -108,4 +111,4 @@ onMounted(()=>{observer=new ResizeObserver(()=>{const r=host.value!.getBoundingC
 onUnmounted(()=>{host.value?.removeEventListener('wheel',wheel);observer?.disconnect();cancelAnimationFrame(frame);window.removeEventListener('blur',resetGesture)})
 defineExpose({ beginPreview,endPreview, fit, zoomIn:()=>zoomTo(size*1.25), zoomOut:()=>zoomTo(size/1.25), cancel:resetGesture })
 </script>
-<template><div ref="host" class="pin-viewport" :data-tool="tool" @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up" @lostpointercapture="up" @contextmenu.prevent><canvas ref="canvas" aria-label="拼豆编辑画布"></canvas></div></template>
+<template><div ref="host" class="pin-viewport" :data-tool="tool" @pointerdown="down" @pointermove="move" @pointerup="up" @pointercancel="up" @lostpointercapture="up" @contextmenu.prevent><canvas ref="canvas" aria-label="拼豆编辑画布"></canvas><div v-if="tool==='eyedropper'&&sampleIndex>=0" class="pin-pick-magnifier" :class="{'is-left':sampleLeft}" role="status" :aria-label="`取色预览 ${sampleCode||'空格'}`"><div class="pin-pick-magnifier-grid"><i v-for="(hex,n) in sampleCells" :key="n" :style="{backgroundColor:hex}" :class="{'is-target':n===12,'is-round':round}"/></div><div class="pin-pick-magnifier-label"><i :style="{backgroundColor:sampleCode?colorByCode(sampleCode)?.hex:'transparent'}"/><span>{{sampleCode||'空格'}}</span></div></div></div></template>
