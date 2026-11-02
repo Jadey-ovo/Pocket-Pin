@@ -43,3 +43,8 @@ fix(palette): correct MARD color code
 docs(prd): define project creation flow
 feat(storage)!: replace the saved-project format
 ```
+
+
+## 产品与设计正文
+
+当前用户可用功能见 [产品 PRD](../docs/PRD-Pocket-Pin.md)，未实现方向见 [产品规划](../docs/产品规划-Pocket-Pin.md)。模块职责与后续结构整理方案见 [仓库结构设计](../docs/设计说明-仓库结构.md)，完整文档入口见 [文档导航](../docs/README.md)。
